@@ -14,7 +14,7 @@ hold off;
 xlabel('节点编号');
 ylabel('电压幅值 (p.u.)');
 title('节点电压分布');
-grid on;
+grid on; 
 
 % 添加图例
 legend('节点电压', '电压下限', '电压上限', 'Location', 'best');
