@@ -1,6 +1,0 @@
-function [BUS_OLTC, KMIN, KMAX, MAXTAP_OLTC] = idx_oltc
-
-BUS_OLTC = 1;
-KMIN = 2;
-KMAX = 3;
-MAXTAP_OLTC = 4;
