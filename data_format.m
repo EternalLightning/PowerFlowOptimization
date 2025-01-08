@@ -12,12 +12,10 @@ mpc.baseI = mpc.baseS / (mpc.baseU * sqrt(3)); % 基准电流
 % 列号  数据类型    描述
 % 1     整数      母线编号
 % 2     整数      母线类型 (1=PQ, 2=PV, 3=平衡节点)
-% 3     实数      有功负荷 (p.u.)
-% 4     实数      无功负荷 (p.u.)
-% 5     实数      电压幅值 (p.u.)
-% 6     实数      电压相角 (度)
-% 7     实数      最小电压限值 (p.u.)
-% 8     实数      最大电压限值 (p.u.)
+% 3     实数      电压幅值 (p.u.)
+% 4    实数      电压相角 (度)
+% 5     实数      最小电压限值 (p.u.)
+% 6     实数      最大电压限值 (p.u.)
 
 
 % 支路数据格式 (branch matrix) - 所有参数使用标幺制
@@ -129,12 +127,13 @@ mpc.built_in.ieee123 = [
 mpc.bus = [];
 mpc.branch = [];
 mpc.gen = [];
-mpc.solar = [];  % 新增光伏发电矩阵
-mpc.wind = [];   % 新增风电矩阵
+mpc.solar = [];  % 光伏矩阵
+mpc.wind = [];   % 风电矩阵
 mpc.storage = [];
 mpc.solar_time = [];  % 光伏日变化曲线
 mpc.pd_time = [];  % 有功日变化曲线
 mpc.qd_time = [];  % 无功日变化曲线
+mpc.price = [];  % 电价日变化曲线
 
 end 
 

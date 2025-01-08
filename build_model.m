@@ -46,6 +46,14 @@ for i = 1:ng
     gen_cost = gen_cost + gen(7) * vars.Pg(i)^2 + gen(8) * vars.Pg(i) + gen(9);
 end
 
+% 支路功率损耗成本（与电价相关）
+branch_cost = 0;
+for i = 1:nl
+    for j = 1:conf.time
+        branch_cost = branch_cost + vars.l * mpc.branch(i, 3) * mpc.price(j);
+    end
+end
+ 
 % 可再生能源发电成本
 solar_cost = 0;
 % wind_cost = sum(mpc.wind(:, 6) .* vars.Pw);
@@ -54,7 +62,7 @@ solar_cost = 0;
 storage_cost = 0;
 
 % 总目标函数
-model.objective = gen_cost + solar_cost + storage_cost;
+model.objective = gen_cost + solar_cost + storage_cost + branch_cost;
 
 %% 构建约束条件
 C = [];
@@ -62,24 +70,25 @@ C = [];
 % 1. 总线电压约束
 for i = 1:nb
     C = [C;
-        mpc.bus(i, 8)^2 * ones(1, conf.time) <= vars.v(i, :) <= mpc.bus(i, 7)^2 * ones(1, conf.time)
+        mpc.bus(i, 6)^2 * ones(1, conf.time) <= vars.v(i, :) <= mpc.bus(i, 5)^2 * ones(1, conf.time)
     ];
 end
 
 % 2. 发电机出力约束
 for i = 1:ng
     C = [C;
-        mpc.gen(i, 3) * ones(1, conf.time) <= vars.Pg(i, :) <= mpc.gen(i, 2) * ones(1, conf.time);    % 有功出力限制
-        mpc.gen(i, 5) * ones(1, conf.time) <= vars.Qg(i, :) <= mpc.gen(i, 4) * ones(1, conf.time)
-    ];   % 无功出力限制
+        mpc.gen(i, 3) * ones(1, conf.time) <= vars.Pg(i, :) <= mpc.gen(i, 2) * ones(1, conf.time);  % 有功出力限制
+        mpc.gen(i, 5) * ones(1, conf.time) <= vars.Qg(i, :) <= mpc.gen(i, 4) * ones(1, conf.time);  % 无功出力限制
+        vars.Pg(i, :).^2 + var.Qg(i, :).^2 <= mpc.gen(i, 6)^2 * ones(1, conf.time)  % 容量限制
+    ];
 end
 
 % 3. 光伏出力约束
 for i = 1:ns
     C = [C;
-        mpc.solar(i, 3) * ones(1, conf.time) <= vars.Ps(i) <= mpc.solar(i, 2) * ones(1, conf.time) ;  % 有功出力限制
-        mpc.solar(i, 5) * ones(1, conf.time) <= vars.Qs(i) <= mpc.solar(i, 4) * ones(1, conf.time) 
-    ];   % 无功出力限制
+        mpc.solar(i, 3) * ones(1, conf.time) <= vars.Ps(i, :) <= mpc.solar(i, 2) * ones(1, conf.time) ;  % 有功出力限制
+        mpc.solar(i, 5) * ones(1, conf.time) <= vars.Qs(i, :) <= mpc.solar(i, 4) * ones(1, conf.time) 
+    ];
 end
 
 % 4. 风电出力约束
@@ -88,83 +97,71 @@ end
 %     C = [C;
 %         0 <= vars.Pw(i) <= wind(2) * wind(3);    % 有功出力限制
 %         wind(5) <= vars.Qw(i) <= wind(4)
-%     ];     % 无功出力限制
+%     ];
 % end
 
-% 5. 支路功率流约束（基于分支流模型的二阶锥约束）
-for i = 1:nl
-    branch = mpc.branch(i, :);
-    from_bus = branch(1);
-    to_bus = branch(2);
-    
-    % 二阶锥约束
-    C = [C;
+% 5. 节点功率平衡约束
+for bus_num = 1:nb
+    % 获取连接到节点i的所有支路**索引**
+    [from_lines, to_lines] = get_connected_lines(mpc, bus_num);
+    gens = find(mpc.gen(:, 1) == bus_num);
+    solars = find(mpc.solar(:, 1) == bus_num);
+    storages = find(mpc.storage(:, 1) == bus_num);
+    for j = 1:conf.time
+        % 有功功率平衡
+        P_gen = sum(vars.Pg(gens, j));          % 发电机出力
+        P_solar = sum(vars.Ps(solars, j));      % 光伏出力
+        %P_wind = sum(vars.Pw(mpc.wind(:, j) == bus_num));        % 风电出力
+        P_load = mpc.pd_time(bus_num, j);                        % 负荷功率
         
-    ];
-    
-    % 支路容量约束
-    C = [C;
+        % 支路功率流
+        P_flow = 0;
+        for k = from_lines
+            P_flow = P_flow + ;  % 损耗功率重复了？？
+        end
+        for k = to_lines
+            P_flow = P_flow - ;
+        end
         
-    ];
+        % 有功功率平衡约束
+        C = [C;
+            P_gen + P_solar + P_wind - P_load == P_flow
+        ];
+        
+        % 无功功率平衡约束
+        Q_gen = sum(vars.Qg(mpc.gen(:, 1) == bus_num));
+        Q_solar = sum(vars.Qs(mpc.solar(:, 1) == bus_num));
+        Q_wind = sum(vars.Qw(mpc.wind(:, 1) == bus_num));
+        Q_load = mpc.bus(bus_num, 4);
+        
+        Q_flow = 0;
+        for k = from_lines
+            Q_flow = Q_flow + (vars.v(bus_num) - vars.v(branch(2))) * x / z2;
+        end
+        for k = to_lines
+            Q_flow = Q_flow - (vars.v(bus_num) - vars.v(branch(1))) * x / z2;
+        end
+        
+        C = [C;
+            Q_gen + Q_solar + Q_wind - Q_load == Q_flow
+        ];
+    end
 end
 
-% 6. 节点功率平衡约束
-for i = 1:nb
-    % 获取连接到节点i的所有支路
-    [from_lines, to_lines] = get_connected_lines(mpc, i);
-    
-    % 有功功率平衡
-    P_gen = sum(vars.Pg(mpc.gen(:, 1) == i));          % 发电机出力
-    P_solar = sum(vars.Ps(mpc.solar(:, 1) == i));      % 光伏出力
-    P_wind = sum(vars.Pw(mpc.wind(:, 1) == i));        % 风电出力
-    P_load = mpc.bus(i, 3);                            % 负荷功率
-    
-    % 支路功率流
-    P_flow = 0;
-    for j = from_lines
-        branch = mpc.branch(j, :);
-        r = branch(3);
-        x = branch(4);
-        z2 = r^2 + x^2;
-        P_flow = P_flow + (vars.v(i) - vars.v(branch(2))) * r / z2;
-    end
-    for j = to_lines
-        branch = mpc.branch(j, :);
-        r = branch(3);
-        x = branch(4);
-        z2 = r^2 + x^2;
-        P_flow = P_flow + (vars.v(i) - vars.v(branch(1))) * r / z2;
-    end
-    
-    % 有功功率平衡约束
+% 6. 支路功率流约束（基于分支流模型的二阶锥约束）
+for i = 1:nl
+    from_bus = mpc.branch(i, 1);
+    to_bus = mpc.branch(i, 2);
+    r = mpc.branch(i, 3);
+    x = mpc.branch(i, 4);
+    % 二阶锥约束
     C = [C;
-        P_gen + P_solar + P_wind - P_load == P_flow
+        cone([2 * ])
     ];
     
-    % 无功功率平衡约束
-    Q_gen = sum(vars.Qg(mpc.gen(:, 1) == i));
-    Q_solar = sum(vars.Qs(mpc.solar(:, 1) == i));
-    Q_wind = sum(vars.Qw(mpc.wind(:, 1) == i));
-    Q_load = mpc.bus(i, 4);
-    
-    Q_flow = 0;
-    for j = from_lines
-        branch = mpc.branch(j, :);
-        r = branch(3);
-        x = branch(4);
-        z2 = r^2 + x^2;
-        Q_flow = Q_flow + (vars.v(i) - vars.v(branch(2))) * x / z2;
-    end
-    for j = to_lines
-        branch = mpc.branch(j, :);
-        r = branch(3);
-        x = branch(4);
-        z2 = r^2 + x^2 ;
-        Q_flow = Q_flow + (vars.v(i) - vars.v(branch(1))) * x / z2;
-    end
-    
+    % 支路负荷约束
     C = [C;
-        Q_gen + Q_solar + Q_wind - Q_load == Q_flow
+        
     ];
 end
 

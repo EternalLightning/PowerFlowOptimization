@@ -1,5 +1,5 @@
 function [from_line, to_line] = get_connected_lines(mpc, bus_i)
-% GET_CONNECTED_LINES 获取连接到指定节点的所有支路索引
+% get_connected_lines 获取连接到指定节点的所有支路**索引**
 % 输入：
 %   mpc - 包含网络数据的结构体
 %   bus_i - 目标节点编号

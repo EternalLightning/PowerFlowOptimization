@@ -15,36 +15,45 @@ load(conf.network.case_file, case_mpc);
 
 
 % 母线数据
-% [bus_num type Pd Qd V_mag V_angle V_max V_min]
+% [bus_num type V_mag V_angle V_max V_min]
 % type: 1-PQ，2-PV，3-ref
-if isfield(case_mpc, 'bus')
-    mpc.bus = case_mpc.bus;
-else
+if ~isfield(case_mpc, 'bus')
     error('总线数组(case_mpc.bus)未定义，请在案例文件中定义！')
+elseif size(case_mpc.bus, 2) ~= 6
+    error(['总线数组维数错误(', size(case_mpc.bus, 2), ')，请检查！'])
+else
+    mpc.bus = case_mpc.bus;
 end
 
 
 % 支路数据
 % [from_bus to_bus r x b S_max I_max]
-if isfield(case_mpc, 'branch')
-    mpc.branch = case_mpc.branch;
-else
+if ~isfield(case_mpc, 'branch')
     error('支路数组(case_mpc.branch)未定义，请在案例文件中定义！')
+elseif size(case_mpc.branch, 2) ~= 7
+    error(['支路数组维数错误(', size(case_mpc.branch, 2), ')，请检查！'])
+else
+    mpc.branch = case_mpc.branch;
 end
 
 
 % 发电机数据
 % [conn_bus Pmax Pmin Qmax Qmin S a b c]
-if isfield(case_mpc, 'gen')
-    mpc.gen = case_mpc.gen;
-else
+if ~isfield(case_mpc, 'gen')
     error('发电机数组(case_mpc.gen)未定义，请在案例文件中定义！')
+elseif size(case_mpc.gen, 2) ~= 9
+    error(['发电机数组维数错误(', size(case_mpc.gen, 2), ')，请检查！'])
+else
+    mpc.gen = case_mpc.gen;
 end
 
 
 % 光伏发电数据
 % [conn_bus P_max P_min Q_max Q_min S k]
 if isfield(case_mpc, 'solar')
+    if size(case_mpc.solar, 2) ~= 7
+        error(['光伏数组维数错误(', size(case_mpc.solar, 2), ')，请检查！'])
+    end
     mpc.solar = case_mpc.solar;
     if ~isfield(case_mpc, 'solar_time')
         mpc.solar_time = 0.35 * ones(size(mpc.solar, 1), conf.time);
@@ -65,10 +74,12 @@ end
 
 % 储存电站数据
 % [conn_bus P_max P_min Q_max Q_min S u k]
-if isfield(case_mpc, 'storage')
-    mpc.storage = case_mpc.storage;
-else
+if ~isfield(case_mpc, 'storage')
     disp('储存电站数组(case_mpc.storage)未定义，默认为空！')
+elseif size(case_mpc.storage, 2) ~= 7
+    error(['储能电站数组维数错误(', size(case_mpc.storage, 2), ')，请检查！'])
+else
+    mpc.storage = case_mpc.storage;
 end
 
 
