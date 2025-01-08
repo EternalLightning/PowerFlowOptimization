@@ -130,6 +130,6 @@ end
 
 % 风电数据
 % [bus capacity factor Qmax Qmin cost]
-% mpc.wind = case_mpc.wind;
+mpc.wind = case_mpc.wind;
 
 end 

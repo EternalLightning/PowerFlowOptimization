@@ -56,7 +56,7 @@ end
  
 % 可再生能源发电成本
 solar_cost = 0;
-% wind_cost = sum(mpc.wind(:, 6) .* vars.Pw);
+wind_cost = sum(mpc.wind(:, 6) .* vars.Pw);
 
 % 储能电站运行成本
 storage_cost = 0;
@@ -92,13 +92,13 @@ for i = 1:ns
 end
 
 % 4. 风电出力约束
-% for i = 1:nw
-%     wind = mpc.wind(i, :);
-%     C = [C;
-%         0 <= vars.Pw(i) <= wind(2) * wind(3);    % 有功出力限制
-%         wind(5) <= vars.Qw(i) <= wind(4)
-%     ];
-% end
+for i = 1:nw
+    wind = mpc.wind(i, :);
+    C = [C;
+        0 <= vars.Pw(i) <= wind(2) * wind(3);    % 有功出力限制
+        wind(5) <= vars.Qw(i) <= wind(4)
+    ];
+end
 
 % 5. 节点功率平衡约束
 for bus_num = 1:nb
@@ -136,10 +136,10 @@ for bus_num = 1:nb
         
         Q_flow = 0;
         for k = from_lines
-            Q_flow = Q_flow + (vars.v(bus_num) - vars.v(branch(2))) * x / z2;
+            Q_flow = Q_flow + ;
         end
         for k = to_lines
-            Q_flow = Q_flow - (vars.v(bus_num) - vars.v(branch(1))) * x / z2;
+            Q_flow = Q_flow - ;
         end
         
         C = [C;
