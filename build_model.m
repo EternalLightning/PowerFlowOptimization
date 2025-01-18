@@ -11,7 +11,7 @@ nb = size(mpc.bus, 1);     % 母线数量
 nl = size(mpc.branch, 1);  % 支路数量
 ng = size(mpc.gen, 1);     % 发电机数量
 ns = size(mpc.solar, 1);   % 光伏数量
-% nw = size(mpc.wind, 1);    % 风电数量
+nw = size(mpc.wind, 1);    % 风电数量
 
 %% 定义决策变量
 % 电压幅值平方变量
@@ -35,34 +35,46 @@ vars.Ps = sdpvar(ns, conf.time);  % 有功出力
 vars.Qs = sdpvar(ns, conf.time);  % 无功出力
 
 % 风电出力变量
-% vars.Pw = sdpvar(nw, conf.time);  % 有功出力
-% vars.Qw = sdpvar(nw, conf.time);  % 无功出力
+vars.Pw = sdpvar(nw, conf.time);  % 有功出力
+vars.Qw = sdpvar(nw, conf.time);  % 无功出力
 
 %% 构建目标函数
 % 常规发电成本
-gen_cost = 0;
-for i = 1:ng
+gen_cost = zeros(conf.time, 1);
+for i = 1:ng - 1
     gen = mpc.gen(i, :);
-    gen_cost = gen_cost + gen(7) * vars.Pg(i)^2 + gen(8) * vars.Pg(i) + gen(9);
+    for j = 1:conf.time
+        gen_cost(j) = gen_cost(j) + gen(7) * vars.Pg(i, j)^2 + gen(8) * vars.Pg(i, j) + gen(9);
+    end
 end
 
 % 支路功率损耗成本（与电价相关）
-branch_cost = 0;
+branch_cost = zeros(conf.time, 1);
 for i = 1:nl
     for j = 1:conf.time
-        branch_cost = branch_cost + vars.l * mpc.branch(i, 3) * mpc.price(j);
+        branch_cost(j) = branch_cost(j) + vars.l * mpc.branch(i, 3) * mpc.price(j);
     end
 end
  
 % 可再生能源发电成本
-solar_cost = 0;
-wind_cost = sum(mpc.wind(:, 6) .* vars.Pw);
+solar_cost = zeros(conf.time, 1);
+solar_cost(:) = sum(mpc.solar(:, 6));
+
+wind_cost = zeros(conf.time, 1);
+wind_cost(:) = sum(mpc.wind(:, 6));
 
 % 储能电站运行成本
-storage_cost = 0;
+storage_cost = zeros(conf.time, 1);
+
+% 购电成本
+purchase_cost = zeros(conf.time, 1);
+for j = 1:conf.time
+    purchase_cost(j) = vars.Pg(ng, j) * mpc.price(j);
+end
+
 
 % 总目标函数
-model.objective = gen_cost + solar_cost + storage_cost + branch_cost;
+model.objective = gen_cost + solar_cost + wind_cost + storage_cost + branch_cost + purchase_cost;
 
 %% 构建约束条件
 C = [];
@@ -111,13 +123,13 @@ for bus_num = 1:nb
         % 有功功率平衡
         P_gen = sum(vars.Pg(gens, j));          % 发电机出力
         P_solar = sum(vars.Ps(solars, j));      % 光伏出力
-        %P_wind = sum(vars.Pw(mpc.wind(:, j) == bus_num));        % 风电出力
+        P_wind = sum(vars.Pw(mpc.wind(:, j) == bus_num));        % 风电出力
         P_load = mpc.pd_time(bus_num, j);                        % 负荷功率
         
         % 支路功率流
         P_flow = 0;
         for k = from_lines
-            P_flow = P_flow + ;  % 损耗功率重复了？？
+            P_flow = P_flow + ;
         end
         for k = to_lines
             P_flow = P_flow - ;

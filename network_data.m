@@ -47,6 +47,8 @@ else
     mpc.gen = case_mpc.gen;
 end
 
+mpc.gen = [mpc.gen; 1 1000000 -1000000 0 0 1000000 0 0 0]
+
 
 % 光伏发电数据
 % [conn_bus P_max P_min Q_max Q_min S k]
@@ -110,6 +112,17 @@ if isfield(case_mpc, 'qd_time')
     end
 else
     mpc.qd_time = ones(size(mpc.gen, 1), conf.time);
+end
+
+
+% 电价数据
+if ~isfield(case_mpc, 'price')
+    error('电价数组(case_mpc.price)未定义，请在案例文件中定义！')
+elseif size(case_mpc.price, 1) ~= conf.time
+    error(['电价时段跨度(', size(case_mpc.price, 1), ...
+               ')与设置(', conf.time, ')不匹配！'])
+else
+    mpc.price = case_mpc.price;
 end
 
 
