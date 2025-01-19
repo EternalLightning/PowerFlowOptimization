@@ -44,10 +44,8 @@ if ~isfield(case_mpc, 'gen')
 elseif size(case_mpc.gen, 2) ~= 9
     error(['发电机数组维数错误(', size(case_mpc.gen, 2), ')，请检查！'])
 else
-    mpc.gen = case_mpc.gen;
+    mpc.gen = [case_mpc.gen; 1 1000000 -1000000 0 0 1000000 0 0 0];
 end
-
-mpc.gen = [mpc.gen; 1 1000000 -1000000 0 0 1000000 0 0 0]
 
 
 % 光伏发电数据
