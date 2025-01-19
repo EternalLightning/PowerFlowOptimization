@@ -25,7 +25,7 @@ conf.voltage.max = 1.05;     % 最大电压限值（标幺值）
 conf.voltage.min = 0.95;     % 最小电压限值（标幺值）
 
 %% 时段数量设置
-conf.time = 1; % 1为不考虑时段变化，24为一天24小时的时段变化
+conf.time = 1; % 1为不考虑时段变化，24为一天24小时的时段变化。建议只使用1和24两个值。
 
 %% 结果输出设置
 conf.output.save_results = false;    % 是否保存结果到文件

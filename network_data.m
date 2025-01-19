@@ -51,7 +51,7 @@ mpc.gen = [mpc.gen; 1 1000000 -1000000 0 0 1000000 0 0 0]
 
 
 % 光伏发电数据
-% [conn_bus P_max P_min Q_max Q_min S k]
+% [conn_bus P_max P_min n S k a]
 if isfield(case_mpc, 'solar')
     if size(case_mpc.solar, 2) ~= 7
         error(['光伏数组维数错误(', size(case_mpc.solar, 2), ')，请检查！'])
@@ -74,11 +74,35 @@ else
 end
 
 
+% 风力发电数据
+% [conn_bus P_max P_min n S k a]
+if isfield(case_mpc, 'wind')
+    if size(case_mpc.wind, 2) ~= 7
+        error(['风力数组维数错误(', size(case_mpc.wind, 2), ')，请检查！'])
+    end
+    mpc.wind = case_mpc.wind;
+    if ~isfield(case_mpc, 'wind_time')
+        mpc.wind_time = 0.5 * ones(size(mpc.wind, 1), conf.time);
+        disp('在案例文件中找到风力数组，但日出力数组(case_mpc.wind_time)未定义，默认为最大出力的50%！')
+    elseif size(mpc.wind_time, 1) ~= size(case_mpc.wind_time, 1)
+        error(['风力发电机数量(', size(mpc.wind, 1), ...
+               ')与给定时段数量(', size(case_mpc.wind_time, 1), ')不匹配！'])
+    elseif size(case_mpc.wind_time, 2) ~= conf.time
+        error(['光伏日出力时段跨度(', size(case_mpc.wind_time, 2), ...
+               ')与设置(', conf.time, ')不匹配！'])
+    else
+        mpc.wind_time = case_mpc.wind_time;
+    end
+else
+    disp('风力数组(case_mpc.wind)未定义，默认为空！')
+end
+
+
 % 储存电站数据
-% [conn_bus P_max P_min Q_max Q_min S u k]
+% [conn_bus P_max P_min n S a b c]
 if ~isfield(case_mpc, 'storage')
     disp('储存电站数组(case_mpc.storage)未定义，默认为空！')
-elseif size(case_mpc.storage, 2) ~= 7
+elseif size(case_mpc.storage, 2) ~= 8
     error(['储能电站数组维数错误(', size(case_mpc.storage, 2), ')，请检查！'])
 else
     mpc.storage = case_mpc.storage;
@@ -140,9 +164,5 @@ switch conf.network.topology
     otherwise
         error('不支持的网络拓扑类型，请修改配置文件！');
 end
-
-% 风电数据
-% [bus capacity factor Qmax Qmin cost]
-mpc.wind = case_mpc.wind;
 
 end 
