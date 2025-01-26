@@ -107,8 +107,8 @@ C = [C;
 ];
 
 % 6. 节点功率平衡约束
-p_j = mat_gbus * vars.Pg + mat_sbus * vars.Ps + mat_wbus * vars.Pw + mat_stbus * vars.Pst;
-q_j = mat_gbus * vars.Qg + mat_sbus * vars.Qs + mat_wbus * vars.Qw + mat_stbus * vars.Qst;
+p_j = mat_gbus * vars.Pg + mat_sbus * vars.Ps + mat_wbus * vars.Pw + mat_stbus * vars.Pst - mpc.pd_time;
+q_j = mat_gbus * vars.Qg + mat_sbus * vars.Qs + mat_wbus * vars.Qw + mat_stbus * vars.Qst - mpc.qd_time;
 C = [C;
     p_j == mat_tbus * vars.P - mat_fbus * (vars.P - vars.l .* r);
     q_j == mat_tbus * vars.Q - mat_fbus * (vars.Q - vars.l .* x);

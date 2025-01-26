@@ -18,9 +18,9 @@ load(conf.network.case_file, case_mpc);
 % [bus_num type V_mag V_angle V_max V_min]
 % type: 1-PQ，2-PV，3-ref
 if ~isfield(case_mpc, 'bus')
-    error('总线数组(case_mpc.bus)未定义，请在案例文件中定义！')
+    error('母线数组(case_mpc.bus)未定义，请在案例文件中定义！')
 elseif size(case_mpc.bus, 2) ~= 6
-    error(['总线数组维数错误(', size(case_mpc.bus, 2), ')，请检查！'])
+    error(['母线数组维数错误(', size(case_mpc.bus, 2), ')，请检查！'])
 else
     mpc.bus = case_mpc.bus;
 end
@@ -109,31 +109,31 @@ end
 
 if isfield(case_mpc, 'pd_time')
     if size(case_mpc.pd_time, 2) ~= conf.time
-        error(['发电机日出力时段跨度(', size(case_mpc.pd_time, 2), ...
+        error(['母线有功需求时段跨度(', size(case_mpc.pd_time, 2), ...
                ')与设置(', conf.time, ')不匹配！'])
-    elseif size(case_mpc.pd_time, 1) ~= size(mpc.gen, 1)
-        error(['发电机数量(', size(mpc.gen, 1), ...
-               ')与给定时段数量(', size(case_mpc.pd_time, 1), ')不匹配！'])
+    elseif size(case_mpc.pd_time, 1) ~= size(mpc.bus, 1)
+        error(['母线有功需求数量(', size(case_mpc.pd_time, 1), ...
+               ')与给定母线数量(', size(mpc.bus, 1), ')不匹配！'])
     else
         mpc.pd_time = case_mpc.pd_time;
     end
 else
-    mpc.pd_time = ones(size(mpc.gen, 1), conf.time);
+    error('母线有功需求数组(case_mpc.pd_time)未定义！请在案例文件中定义！');
 end
 
 
 if isfield(case_mpc, 'qd_time')
     if size(case_mpc.qd_time, 2) ~= conf.time
-        error(['发电机日出力时段跨度(', size(case_mpc.qd_time, 2), ...
+        error(['母线有功需求时段跨度(', size(case_mpc.qd_time, 2), ...
                ')与设置(', conf.time, ')不匹配！'])
-    elseif size(case_mpc.qd_time, 1) ~= size(mpc.gen, 1)
-        error(['发电机数量(', size(mpc.gen, 1), ...
-               ')与给定时段数量(', size(case_mpc.qd_time, 1), ')不匹配！'])
+    elseif size(case_mpc.qd_time, 1) ~= size(mpc.bus, 1)
+        error(['母线有功需求数量(', size(case_mpc.qd_time, 1), ...
+               ')与给定母线数量(', size(mpc.bus, 1), ')不匹配！'])
     else
         mpc.qd_time = case_mpc.qd_time;
     end
 else
-    mpc.qd_time = ones(size(mpc.gen, 1), conf.time);
+    error('母线无功需求数组(case_mpc.qd_time)未定义！请在案例文件中定义！');
 end
 
 
@@ -163,4 +163,4 @@ switch conf.network.topology
         error('不支持的网络拓扑类型，请修改配置文件！');
 end
 
-end 
+end
