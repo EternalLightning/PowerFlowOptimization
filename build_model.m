@@ -51,12 +51,13 @@ solar_cost = sum(mpc.solar(:, 6) .* mpc.solar(:, 7) .* vars.Ps * 1000 * 24 / (36
 wind_cost = sum(mpc.wind(:, 6) .* mpc.wind(:, 7) .* vars.Pw * 1000 * 24 / (365 * conf.time))';
 
 % 储能电站运行成本
-storage_cost = zeros(conf.time, 1);
-for j = 1:conf.time
-    for i = 1:nst
-        storage_cost(j) = storage_cost(j) + mpc.storage(6) * mpc.storage(5) + mpc.storage(7) * vars.Pst(i, j) * 1000 * 24 / conf.time + mpc.storage(8);
-    end
-end
+% storage_cost = zeros(conf.time, 1);
+% for j = 1:conf.time
+%     for i = 1:nst
+%         storage_cost(j) = storage_cost(j) + mpc.storage(6) * mpc.storage(5) + mpc.storage(7) * vars.Pst(i, j) * 1000 * 24 / conf.time + mpc.storage(8);
+%     end
+% end
+storage_cost = sum(mpc.storage(:, 6) .* mpc.storage(:, 5) + mpc.storage(:, 7) .* vars.Pst * 1000 * 24 / conf.time)
 
 
 %% 2. 运行成本
