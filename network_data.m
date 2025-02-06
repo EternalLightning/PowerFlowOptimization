@@ -41,7 +41,7 @@ end
 % [conn_bus Pmax Pmin Qmax Qmin S a b c]
 if ~isfield(case_mpc, 'gen')
     error('发电机数组(case_mpc.gen)未定义，请在案例文件中定义！')
-elseif size(case_mpc.gen, 2) ~= 9
+elseif size(case_mpc.gen, 2) ~= 10
     error(['发电机数组维数错误(', size(case_mpc.gen, 2), ')，请检查！'])
 else
     mpc.gen = [case_mpc.gen; 1 1000000 -1000000 0 0 1000000 0 0 0];
@@ -51,7 +51,7 @@ end
 % 光伏发电数据
 % [conn_bus P_max P_min n S k a]
 if isfield(case_mpc, 'solar')
-    if size(case_mpc.solar, 2) ~= 7
+    if size(case_mpc.solar, 2) ~= 8
         error(['光伏数组维数错误(', size(case_mpc.solar, 2), ')，请检查！'])
     end
     mpc.solar = case_mpc.solar;
@@ -75,7 +75,7 @@ end
 % 风力发电数据
 % [conn_bus P_max P_min n S k a]
 if isfield(case_mpc, 'wind')
-    if size(case_mpc.wind, 2) ~= 7
+    if size(case_mpc.wind, 2) ~= 8
         error(['风力数组维数错误(', size(case_mpc.wind, 2), ')，请检查！'])
     end
     mpc.wind = case_mpc.wind;
