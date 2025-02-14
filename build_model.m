@@ -63,7 +63,7 @@ branch_cost = 1000 * t * sum(vars.l .* r .* mpc.price')';  % 支路功率损耗�
 run_cost = gen_run_cost + solar_run_cost + wind_run_cost + storage_run_cost + purchase_cost + branch_cost;
 
 % 总目标函数
-model.objective = sum(run_cost);
+model.objective = sum(run_cost); % 欠考虑
 
 %% 构建约束条件
 % 1. 总线电压约束

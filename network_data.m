@@ -49,7 +49,7 @@ end
 
 
 % 光伏发电数据
-% [conn_bus P_max P_min n S k a]
+% [conn_bus P_max P_min n S k a b]
 if isfield(case_mpc, 'solar')
     if size(case_mpc.solar, 2) ~= 8
         error(['光伏数组维数错误(', size(case_mpc.solar, 2), ')，请检查！'])
@@ -73,7 +73,7 @@ end
 
 
 % 风力发电数据
-% [conn_bus P_max P_min n S k a]
+% [conn_bus P_max P_min n S k a b]
 if isfield(case_mpc, 'wind')
     if size(case_mpc.wind, 2) ~= 8
         error(['风力数组维数错误(', size(case_mpc.wind, 2), ')，请检查！'])
