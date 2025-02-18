@@ -15,7 +15,7 @@ conf.solver.gap_tol = 1e-4;    % 收敛容差
 conf.solver.verbose = 0;       % 是否显示求解细节（0-3）
 
 %% 案例文件选择
-conf.network.case_file = 'case.m';
+conf.network.case_file = 'case33.m';
 
 %% 网络拓扑选择
 conf.network.topology = 'ieee33';  % 可选: 'ieee33', 'ieee123', 'custom', 如果为'custom'，需在自定义案例文件中定义网络结构

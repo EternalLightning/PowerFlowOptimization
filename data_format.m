@@ -131,6 +131,7 @@ mpc.solar = [];  % 光伏矩阵
 mpc.wind = [];   % 风电矩阵
 mpc.storage = [];
 mpc.solar_time = [];  % 光伏日变化曲线
+mpc.wind_time = []; % 风力日变化曲线
 mpc.pd_time = [];  % 有功日变化曲线
 mpc.qd_time = [];  % 无功日变化曲线
 mpc.price = [];  % 电价日变化曲线
