@@ -15,6 +15,8 @@ nw = size(mpc.wind, 1);      % 风电数量
 nst = size(mpc.storage, 1);  % 储能数量
 nt = conf.time;              % 时段数量
 t = 24 / nt;                 % 每个时段的小时数
+Sb = conf.base.S;            % 容量基准值
+Ub = conf.base.U;            % 电压基准值
 
 %% 定义决策变量
 vars.v = sdpvar(nb, nt);     % 电压幅值平方变量
@@ -66,10 +68,10 @@ run_cost = gen_run_cost + solar_run_cost + wind_run_cost + storage_run_cost + pu
 model.objective = sum(run_cost); % 欠考虑
 
 %% 构建约束条件
-% 1. 总线电压约束
+% 1. 母线电压约束
 C = [
     mpc.bus(:, 6).^2 <= vars.v <= mpc.bus(:, 5).^2;
-]
+];
 
 % 2. 发电机出力约束
 C = [C;
@@ -118,9 +120,9 @@ C = [C;
 % 7. 支路功率流约束（基于分支流模型的二阶锥约束）
 C = [C;
     vars.P.^2 + vars.Q.^2 <= vars.l .* (mat_fbus' * vars.v);  % 能写成cone([a, b; x, y])吗？感觉意义不大，计算差不了几秒。
-    mat_tbus' * vars.v = mat_fbus' * vars.v - 2 * (r .* vars.P + x .* vars.Q) + (r.^2 + x.^2) * vars.l;
-    vars.v >= 0;
-    vars.l >= 0;
+    mat_tbus' * vars.v == mat_fbus' * vars.v - 2 * (r .* vars.P + x .* vars.Q) + (r.^2 + x.^2) * vars.l;
+    0 <= vars.v;
+    0 <= vars.l <= mpc.branch(:, 7).^2;
 ];
 
 model.constraints = C;

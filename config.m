@@ -15,17 +15,13 @@ conf.solver.gap_tol = 1e-4;    % 收敛容差
 conf.solver.verbose = 0;       % 是否显示求解细节（0-3）
 
 %% 案例文件选择
-conf.network.case_file = 'case_mpc.m';
+conf.network.case_file = 'case.m';
 
 %% 网络拓扑选择
 conf.network.topology = 'ieee33';  % 可选: 'ieee33', 'ieee123', 'custom', 如果为'custom'，需在自定义案例文件中定义网络结构
 
-%% 电压约束
-conf.voltage.max = 1.05;     % 最大电压限值（标幺值）
-conf.voltage.min = 0.95;     % 最小电压限值（标幺值）
-
 %% 时段数量设置
-conf.time = 1; % 1为不考虑时段变化，24为一天24小时的时段变化。建议只使用1和24两个值。
+conf.time = 24; % 1为不考虑时段变化，24为一天24小时的时段变化。建议只使用1和24两个值。
 
 %% 结果输出设置
 conf.output.save_results = false;    % 是否保存结果到文件
