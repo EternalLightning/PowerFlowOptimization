@@ -44,7 +44,7 @@ if ~isfield(case_mpc, 'gen')
 elseif size(case_mpc.gen, 2) ~= 10
     error('发电机数组维数错误(%d)，请检查！', size(case_mpc.gen, 2));
 else
-    mpc.gen = [case_mpc.gen; 1 1000000 -1000000 0 0 1000000 0 0 0 0];
+    mpc.gen = [case_mpc.gen; 1 1000 -1000 1000 -1000 2000 0 0 0 0];
 end
 
 
@@ -67,6 +67,8 @@ if isfield(case_mpc, 'solar')
     end
 else
     disp('光伏数组(case_mpc.solar)未定义，默认为空！');
+    mpc.solar = [1 0 0 1 0 0 0 0];
+    mpc.solar_time = 0;
 end
 
 
@@ -89,6 +91,8 @@ if isfield(case_mpc, 'wind')
     end
 else
     disp('风力数组(case_mpc.wind)未定义，默认为空！');
+    mpc.wind = [1 0 0 1 0 0 0 0];
+    mpc.wind_time = 0;
 end
 
 
@@ -96,6 +100,7 @@ end
 % [conn_bus P_max P_min n S a b c]
 if ~isfield(case_mpc, 'storage')
     disp('储存电站数组(case_mpc.storage)未定义，默认为空！');
+    mpc.storage = [1 0 0 1 0 0 0 0];
 elseif size(case_mpc.storage, 2) ~= 8
     error('储能电站数组维数错误(%d)，请检查！', size(case_mpc.storage, 2));
 else
@@ -136,22 +141,6 @@ elseif size(case_mpc.price, 1) ~= conf.time
     error('电价时段跨度(%d)与设置(%d)不匹配！', size(case_mpc.price, 1), conf.time);
 else
     mpc.price = case_mpc.price;
-end
-
-
-% 根据配置选择拓扑结构
-switch conf.network.topology
-    case 'ieee33'
-        mpc.topology = mpc.built_in.ieee33;
-    case 'ieee123'
-        mpc.topology = mpc.built_in.ieee123;
-    case 'custom'
-        if ~isfield(case_mpc, 'topology')
-            error("配置文件中，拓扑选择为'custom'，但案例文件中未自定义拓扑结构！");
-        end
-        mpc.topology = case_mpc.topology;
-    otherwise
-        error('不支持的网络拓扑类型，请修改配置文件！');
 end
 
 end

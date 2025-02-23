@@ -21,10 +21,16 @@ solve = optimize(model.constraints, model.objective, options);
 
 
 if solve.problem == 0
+    results.v = value(vars.v);            % 母线电压幅值平方
+    results.l = value(vars.l);            % 支路电流平方
+    results.P = value(vars.P);            % 支路有功功率
+    results.Q = value(vars.Q);            % 支路无功功率
     results.Pg = value(vars.Pg);          % 发电机有功出力
     results.Qg = value(vars.Qg);          % 发电机无功出力
     results.Ps = value(vars.Ps);          % 光伏有功出力
     results.Pw = value(vars.Pw);          % 风电有功出力
+    results.Pst_in = value(vars.Pst_in);  % 储能电站充电功率
+    results.Pst_out = value(vars.Pst_out);% 储能电站放电功率
     results.soc = value(vars.soc);        % 储能电站荷电状态
     results.obj = value(model.objective); % 目标函数值
     
