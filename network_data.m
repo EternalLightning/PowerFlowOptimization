@@ -38,13 +38,13 @@ end
 
 
 % 发电机数据
-% [conn_bus Pmax Pmin Qmax Qmin S a b c]
 if ~isfield(case_mpc, 'gen')
-    error('发电机数组(case_mpc.gen)未定义，请在案例文件中定义！');
-elseif size(case_mpc.gen, 2) ~= 10
+    mpc.gen = [1 1000 -1000 1000 -1000 1414 0 0 1 1 0 1];
+    disp('发电机数组(case_mpc.gen)未定义，默认为空！');
+elseif size(case_mpc.gen, 2) ~= 12
     error('发电机数组维数错误(%d)，请检查！', size(case_mpc.gen, 2));
 else
-    mpc.gen = [case_mpc.gen; 1 1000 -1000 1000 -1000 2000 0 0 0 0];
+    mpc.gen = [case_mpc.gen; 1 1000 -1000 1000 -1000 1414 0 0 1 1 0 1];
 end
 
 

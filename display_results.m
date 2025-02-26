@@ -8,16 +8,14 @@ function display_results(results, mpc)
 fprintf('\n优化结果：\n');
 fprintf('总成本: %.2f 元\n', results.obj);
 
-results.Ps
-
-results.Pw
-
 % 显示电压结果
-% fprintf('\n节点电压：\n');
-% fprintf('节点\t幅值(p.u.)\n');
-% for i = 1:size(results.v, 1)
-%     fprintf('%d\t%.4f\n', i, sqrt(results.v(i)));
-% end
+fprintf('\n节点电压：\n');
+fprintf('节点\t幅值(p.u.)\n');
+for i = 1:size(results.v, 1)
+    fprintf('%d\t%.4f\n', i, sqrt(results.v(i)));
+end
+
+results.Pg
 
 % 显示支路功率
 % fprintf('\n支路功率：\n');

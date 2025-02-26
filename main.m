@@ -32,6 +32,7 @@ if solve.problem == 0
     results.Pst_in = value(vars.Pst_in);  % 储能电站充电功率
     results.Pst_out = value(vars.Pst_out);% 储能电站放电功率
     results.soc = value(vars.soc);        % 储能电站荷电状态
+    results.inv_cost = vars.inv_cost;     % 投资成本
     results.obj = value(model.objective); % 目标函数值
     
     % 显示结果
