@@ -25,7 +25,7 @@ if solve.problem == 0
     results.l = value(vars.l);            % 支路电流平方
     results.P = value(vars.P);            % 支路有功功率
     results.Q = value(vars.Q);            % 支路无功功率
-    results.Pg = value(vars.Pg);          % 发电机有功出力
+    results.Pg = value(vars.Pg(1:end-1, :));          % 发电机有功出力
     results.Qg = value(vars.Qg);          % 发电机无功出力
     results.Ps = value(vars.Ps);          % 光伏有功出力
     results.Pw = value(vars.Pw);          % 风电有功出力
@@ -36,7 +36,7 @@ if solve.problem == 0
     results.obj = value(model.objective); % 目标函数值
     
     % 显示结果
-    display_results(results, mpc);
+    display_results(results, conf);
     
     % 保存结果
     if conf.output.save_results
