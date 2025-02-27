@@ -81,8 +81,7 @@ model.objective = sum(run_cost); % 欠考虑
 %% 构建约束条件
 % 1. 母线电压约束
 C = [C;
-    % mpc.bus(:, 6).^2 <= vars.v <= mpc.bus(:, 5).^2;
-    0.9 <= vars.v <= 1.5;
+    mpc.bus(:, 6).^2 <= vars.v <= mpc.bus(:, 5).^2;
 ];
 
 % 2. 发电机出力约束
@@ -99,14 +98,14 @@ C = [C;
     vars.Ps <= mpc.solar(:, 5) .* mpc.solar_time;   % 日出力限制
 ];
 
-% % 4. 风电出力约束
+% 4. 风电出力约束
 C = [C;
     mpc.wind(:, 3) <= vars.Pw <= mpc.wind(:, 2);  % 有功出力限制
     0 <= vars.Pw <= mpc.wind(:, 5) .* pf_w;       % 容量限制
     vars.Pw <= mpc.wind(:, 5) .* mpc.wind_time;   % 日出力限制
 ];
 
-% % 5. 储能出力约束
+% 5. 储能出力约束
 C = [C;
     0 <= vars.Pst_in <= mpc.storage(:, 2);   % 有功出力限制
     0 <= vars.Pst_out <= mpc.storage(:, 3);  % 有功出力限制
