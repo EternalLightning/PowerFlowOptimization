@@ -26,18 +26,24 @@ vars.Q = sdpvar(nl, nt);     % 支路无功变量
 vars.Pg = sdpvar(ng, nt);    % 发电机有功出力
 vars.Qg = sdpvar(ng, nt);    % 发电机无功出力
 vars.Ps = sdpvar(ns, nt);    % 光伏有功出力
+vars.Ss = sdpvar(ns, 1);     % 光伏配置容量
 vars.Pw = sdpvar(nw, nt);    % 风电有功出力
+vars.Sw = sdpvar(nw, 1);     % 风电配置容量
 vars.Pst_in = sdpvar(nst, nt);  % 储能有功输入
 vars.Pst_out = sdpvar(nst, nt); % 储能有功输出
+vars.Sst = sdpvar(nst, 1);    % 储能配置容量
 vars.state_in = binvar(nst, nt);  % 储能充电状态
 vars.state_out = binvar(nst, nt); % 储能放电状态
 vars.soc = sdpvar(nst, nt + 1);   % 储能电量
-gen_run_cost = sdpvar(1, nt);  % 发电机运行成本
-solar_run_cost = sdpvar(1, nt);  % 光伏运行成本
-wind_run_cost = sdpvar(1, nt);  % 风电运行成本
-storage_run_cost = sdpvar(1, nt);  % 储能运行成本
-purchase_cost = sdpvar(1, nt);  % 购电成本
-branch_cost = sdpvar(1, nt);  % 支路功率损耗成本
+% gen_inv_cost = sdpvar(ng, 1);  % 发电机投资成本
+solar_inv_cost = sdpvar(1);  % 光伏投资成本
+wind_inv_cost = sdpvar(1);  % 风电投资成本
+gen_run_cost = sdpvar(1);  % 发电机运行成本
+solar_run_cost = sdpvar(1);  % 光伏运行成本
+wind_run_cost = sdpvar(1);  % 风电运行成本
+storage_run_cost = sdpvar(1);  % 储能运行成本
+purchase_cost = sdpvar(1);  % 购电成本
+branch_cost = sdpvar(1);  % 支路功率损耗成本
 
 %% 构建关联矩阵
 mat_fbus = sparse(mpc.branch(:, 1), 1:nl, ones(nl, 1), nb, nl);
@@ -57,26 +63,30 @@ C = [];
 
 %%% 构建目标函数
 %% 1. 投资成本
-gen_inv_cost = sum(mpc.gen(:, 7) ./ ((1 - mpc.gen(:, 8)) .* mpc.gen(:, 9) .* mpc.gen(:, 10)));  % 发电机投资成本
-solar_inv_cost = sum(mpc.solar(:, 6) .* mpc.solar(:, 7) .* mpc.solar(:, 5) * 1000 / 365);  % 光伏投资成本
-wind_inv_cost = sum(mpc.wind(:, 6) .* mpc.wind(:, 7) .* mpc.wind(:, 5) * 1000 / 365);  % 风电投资成本
+% gen_inv_cost = sum(mpc.gen(:, 7) ./ ((1 - mpc.gen(:, 8)) .* mpc.gen(:, 9) .* mpc.gen(:, 10)));  % 发电机投资成本
 storage_inv_cost = sum(mpc.storage(:, 5) .* mpc.storage(:, 6) * 1000 / 365);  % 储能投资成本
-vars.inv_cost = gen_inv_cost + solar_inv_cost + wind_inv_cost + storage_inv_cost;
+C = [C;
+    solar_inv_cost == Sb * 1000 / 365 * sum(mpc.solar(:, 6) .* mpc.solar(:, 7) .* vars.Ss);  % 光伏投资成本
+    wind_inv_cost == Sb * 1000 / 365 * sum(mpc.wind(:, 6) .* mpc.wind(:, 7) .* vars.Sw);  % 风电投资成本
+];
+vars.inv_cost = solar_inv_cost + wind_inv_cost + storage_inv_cost;
 
 %% 2. 运行成本
 C = [C;
-    gen_run_cost == Sb * sum((3.6 * mpc.gen(:, 11) ./ (mpc.gen(:, 12) .* (1 - mpc.gen(:, 11)))) .* vars.Pg);  % 常规发电成本
-    solar_run_cost == Sb * sum(mpc.solar(:, 8) .* vars.Ps * 1000 * t);  % 光伏发电成本
-    wind_run_cost == Sb * sum(mpc.wind(:, 8) .* vars.Pw * 1000 * t);  % 风电发电成本
-    storage_run_cost == Sb * sum(mpc.storage(:, 7) .* (abs(vars.Pst_in) + abs(vars.Pst_out)) * 1000 * t + mpc.storage(:, 8));  % 储能电站运行成本
-    purchase_cost == Sb * 1000 * t * vars.Pg(ng, :) .* mpc.price';  % 购电成本
-    branch_cost == Sb * 1000 * t * sum(vars.l .* r .* mpc.price');  % 支路功率损耗成本（与电价相关）
+    % gen_run_cost == Sb * sum((3.6 * mpc.gen(:, 11) ./ (mpc.gen(:, 12) .* (1 - mpc.gen(:, 11)))) .* vars.Pg, "all");  % 常规发电成本
+    % 发电机主要是预留接口，燃气轮机组不一定会用上
+    gen_run_cost == 0;
+    solar_run_cost == Sb * 1000 * t * sum(mpc.solar(:, 8) .* vars.Ps, 'all');  % 光伏发电成本
+    wind_run_cost == Sb * 1000 * t * sum(mpc.wind(:, 8) .* vars.Pw, 'all');  % 风电发电成本
+    storage_run_cost == Sb * sum(mpc.storage(:, 7) .* (abs(vars.Pst_in) + abs(vars.Pst_out)) * 1000 * t + mpc.storage(:, 8), 'all');  % 储能电站运行成本
+    purchase_cost == Sb * 1000 * t * vars.Pg(ng, :) * mpc.price';  % 购电成本
+    branch_cost == Sb * 1000 * t * sum(vars.l .* r) * mpc.price';  % 支路功率损耗成本（与电价相关）
 ];
 
-run_cost = gen_run_cost + solar_run_cost + wind_run_cost + storage_run_cost + purchase_cost + branch_cost;
+vars.run_cost = gen_run_cost + solar_run_cost + wind_run_cost + storage_run_cost + purchase_cost + branch_cost;
 
 % 总目标函数
-model.objective = sum(run_cost); % 欠考虑
+model.objective = vars.run_cost + vars.inv_cost; % 欠考虑
 
 %% 构建约束条件
 % 1. 母线电压约束
@@ -88,21 +98,21 @@ C = [C;
 C = [C;
     mpc.gen(:, 3) <= vars.Pg <= mpc.gen(:, 2);   % 有功出力限制
     mpc.gen(:, 5) <= vars.Qg <= mpc.gen(:, 4);   % 无功出力限制
-    vars.Pg.^2 + vars.Qg.^2 <= mpc.gen(:, 6).^2;  % 容量限制
+    % vars.Pg.^2 + vars.Qg.^2 <= mpc.gen(:, 6).^2;  % 容量限制
 ];
 
 % 3. 光伏出力约束
 C = [C;
     mpc.solar(:, 3) <= vars.Ps <= mpc.solar(:, 2);  % 有功出力限制
-    0 <= vars.Ps <= mpc.solar(:, 5) .* pf_s;        % 容量限制
-    vars.Ps <= mpc.solar(:, 5) .* mpc.solar_time;   % 日出力限制
+    vars.Ps <= pf_s .* (vars.Ss * mpc.solar_time);
+    vars.Ss <= mpc.solar(:, 5);
 ];
 
 % 4. 风电出力约束
 C = [C;
     mpc.wind(:, 3) <= vars.Pw <= mpc.wind(:, 2);  % 有功出力限制
-    0 <= vars.Pw <= mpc.wind(:, 5) .* pf_w;       % 容量限制
-    vars.Pw <= mpc.wind(:, 5) .* mpc.wind_time;   % 日出力限制
+    vars.Pw <= pf_w .* (vars.Sw * mpc.wind_time);
+    vars.Sw <= mpc.wind(:, 5);
 ];
 
 % 5. 储能出力约束
@@ -112,6 +122,8 @@ C = [C;
     vars.state_in + vars.state_out <= 1;     % 选择充放电状态
     0 <= vars.Pst_in <= 0.2 * mpc.storage(:, 5) .* vars.state_in;    % 充电功率限制
     0 <= vars.Pst_out <= 0.2 * mpc.storage(:, 5) .* vars.state_out;  % 放电功率限制
+    0.2 <= vars.soc <= 0.8;  % 储能电量限制
+    vars.soc(:, 1) == 0.5;  % 初始电量
 ];
 for i = 1:nt
     C = [C;

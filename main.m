@@ -26,17 +26,19 @@ if solve.problem == 0
     results.P = value(vars.P);            % 支路有功功率
     results.Q = value(vars.Q);            % 支路无功功率
     results.Pg = value(vars.Pg(1:end-1, :));          % 发电机有功出力
-    results.Qg = value(vars.Qg);          % 发电机无功出力
+    results.Qg = value(vars.Qg(1:end-1, :));          % 发电机无功出力
     results.Ps = value(vars.Ps);          % 光伏有功出力
+    results.Ss = value(vars.Ss);          % 光伏容量
     results.Pw = value(vars.Pw);          % 风电有功出力
-    results.Pst_in = value(vars.Pst_in);  % 储能电站充电功率
-    results.Pst_out = value(vars.Pst_out);% 储能电站放电功率
+    results.Sw = value(vars.Sw);          % 风电容量
+    results.Pst = value(vars.Pst_out) - value(vars.Pst_in);  % 储能电站充放电功率
     results.soc = value(vars.soc);        % 储能电站荷电状态
-    results.inv_cost = vars.inv_cost;     % 投资成本
+    results.inv_cost = value(vars.inv_cost);     % 投资成本
+    results.run_cost = value(vars.run_cost);     % 运行成本
     results.obj = value(model.objective); % 目标函数值
     
     % 显示结果
-    display_results(results, conf);
+    display_results(results, mpc, conf);
     
     % 保存结果
     if conf.output.save_results
@@ -44,14 +46,6 @@ if solve.problem == 0
             mkdir(conf.output.result_path);
         end
         save(fullfile(conf.output.result_path, 'results.mat'), 'results', 'mpc', 'conf');
-    end
-    
-    % 绘制结果图
-    if conf.output.plot_voltage
-        plot_voltage_profile(results, mpc);
-    end
-    if conf.output.plot_power
-        plot_power_flow(results, mpc);
     end
 else
     disp('优化求解失败！');
