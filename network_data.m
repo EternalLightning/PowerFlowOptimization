@@ -6,13 +6,13 @@ function mpc = network_data(conf)
 %   mpc - 包含网络数据的结构体
 
 % 定义基值
-mpc.baseS = conf.base.S;    % 基准容量
-mpc.baseU = conf.base.U;    % 基准电压
-mpc.baseZ = mpc.baseU ^ 2 / mpc.baseS;  % 基准阻抗
-mpc.baseI = mpc.baseS / (mpc.baseU * sqrt(3)); % 基准电流
+mpc.S_base = conf.base.S;    % 基准容量
+mpc.U_base = conf.base.U;    % 基准电压
+mpc.Z_base = mpc.U_base ^ 2 / mpc.S_base;  % 基准阻抗
+mpc.I_base = mpc.S_base / (mpc.U_base * sqrt(3)); % 基准电流
 
 mpc.flag.gen = true;
-mpc.flag.solar = true;
+mpc.flag.pv = true;
 mpc.flag.wind = true;
 mpc.flag.storage = true;
 
@@ -44,7 +44,7 @@ elseif size(case_mpc.branch, 2) ~= 7
     error('支路矩阵维数错误(%d)，请检查！', size(case_mpc.branch, 2));
 else
     mpc.branch = case_mpc.branch;
-    mpc.branch(:, 3:5) = case_mpc.branch(:, 3:5) / mpc.baseZ;
+    mpc.branch(:, 3:5) = case_mpc.branch(:, 3:5) / mpc.Z_base;
     % mpc.branch(:, 6) = case_mpc.branch(:, 6) / mpc.baseS;
     % mpc.branch(:, 7) = case_mpc.branch(:, 7) / mpc.baseI;
 end
@@ -64,26 +64,26 @@ end
 
 % 光伏发电数据
 % [conn_bus P_max P_min n S k a b]
-if isfield(case_mpc, 'solar')
-    if size(case_mpc.solar, 2) ~= 8
-        error('光伏矩阵维数错误(%d)，请检查！', size(case_mpc.solar, 2));
+if isfield(case_mpc, 'pv')
+    if size(case_mpc.pv, 2) ~= 8
+        error('光伏矩阵维数错误(%d)，请检查！', size(case_mpc.pv, 2));
     end
-    mpc.solar = case_mpc.solar;
-    if ~isfield(case_mpc, 'solar_time')
-        mpc.solar_time = 0.35 * ones(size(mpc.solar, 1), conf.time);
-        disp('在案例文件中找到光伏矩阵，但日出力矩阵(case_mpc.solar_time)未定义，默认为最大出力的35%！');
-    elseif size(case_mpc.solar_time, 1) ~= 1
-        error('区域辐照量矩阵行数(%d)过多！在有限区域内认为辐照量完全一致。', size(case_mpc.solar_time, 1));
-    elseif size(case_mpc.solar_time, 2) ~= conf.time
-        error('光伏日出力时段跨度(%d)与设置(%d)不匹配！', size(case_mpc.solar_time, 2), conf.time);
+    mpc.pv = case_mpc.pv;
+    if ~isfield(case_mpc, 'pv_time')
+        mpc.pv_time = 0.35 * ones(size(mpc.pv, 1), conf.time);
+        disp('在案例文件中找到光伏矩阵，但日出力矩阵(case_mpc.pv_time)未定义，默认为最大出力的35%！');
+    elseif size(case_mpc.pv_time, 1) ~= 1
+        error('区域辐照量矩阵行数(%d)过多！在有限区域内认为辐照量完全一致。', size(case_mpc.pv_time, 1));
+    elseif size(case_mpc.pv_time, 2) ~= conf.time
+        error('光伏日出力时段跨度(%d)与设置(%d)不匹配！', size(case_mpc.pv_time, 2), conf.time);
     else
-        mpc.solar_time = case_mpc.solar_time;
+        mpc.pv_time = case_mpc.pv_time;
     end
 else
-    disp('光伏矩阵(case_mpc.solar)未定义，默认为空！');
-    mpc.solar = [1 0 0 1 0 0 0 0];
-    mpc.solar_time = 0;
-    mpc.flag.solar = false;
+    disp('光伏矩阵(case_mpc.pv)未定义，默认为空！');
+    mpc.pv = [1 0 0 1 0 0 0 0];
+    mpc.pv_time = 0;
+    mpc.flag.pv = false;
 end
 
 
@@ -131,7 +131,7 @@ if isfield(case_mpc, 'pd_time')
     elseif size(case_mpc.pd_time, 1) ~= size(mpc.bus, 1)
         error('母线有功需求数量(%d)与给定母线数量(%d)不匹配！', size(case_mpc.pd_time, 1), size(mpc.bus, 1));
     else
-        mpc.pd_time = case_mpc.pd_time / (mpc.baseS * 1000);
+        mpc.pd_time = case_mpc.pd_time / (mpc.S_base * 1000);
     end
 else
     error('母线有功需求矩阵(case_mpc.pd_time)未定义！请在案例文件中定义！');
@@ -144,7 +144,7 @@ if isfield(case_mpc, 'qd_time')
     elseif size(case_mpc.qd_time, 1) ~= size(mpc.bus, 1)
         error('母线有功需求数量(%d)与给定母线数量(%d)不匹配！', size(case_mpc.qd_time, 1), size(mpc.bus, 1));
     else
-        mpc.qd_time = case_mpc.qd_time / (mpc.baseS * 1000);
+        mpc.qd_time = case_mpc.qd_time / (mpc.S_base * 1000);
     end
 else
     error('母线无功需求矩阵(case_mpc.qd_time)未定义！请在案例文件中定义！');
@@ -154,7 +154,7 @@ end
 % 电价数据
 if ~isfield(case_mpc, 'price')
     error('电价矩阵(case_mpc.price)未定义，请在案例文件中定义！')
-elseif size(case_mpc.price, 2) ~= conf.time
+elseif size(case_mpc.price, 1) ~= conf.time
     error('电价时段跨度(%d)与设置(%d)不匹配！', size(case_mpc.price, 1), conf.time);
 else
     mpc.price = case_mpc.price;

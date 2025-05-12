@@ -41,26 +41,26 @@ if mpc.flag.gen
     figure('Name', '发电机有功功率');
     if conf.time == 24
         fprintf('\n发电机有功功率(p.u)三维图\n');
-        bar3(results.Pg);
+        bar3(results.P_gen);
         fprintf('发电机有功功率(p.u.)数据如下\n');
-        disp(results.Pg);
+        disp(results.P_gen);
     elseif conf.time == 1
         fprintf('发电机有功功率(p.u.)图\n');
-        bar(results.Pg);
+        bar(results.P_gen);
     end
 end
 
 % 显示光伏出力
-if mpc.flag.solar
+if mpc.flag.pv
     figure('Name', '光伏有功功率');
     if conf.time == 24
         fprintf('\n光伏有功功率(p.u)三维图\n');
-        bar3(results.Ps);
+        bar3(results.P_pv);
         fprintf('光伏有功功率(p.u.)数据如下\n');
-        disp(results.Ps);
+        disp(results.P_pv);
     elseif conf.time == 1
         fprintf('光伏有功功率(p.u.)图\n');
-        bar(results.Ps);
+        bar(results.P_pv);
     end
 end
 
@@ -69,12 +69,12 @@ if mpc.flag.wind
     figure('Name', '风电有功功率');
     if conf.time == 24
         fprintf('\n风电有功功率(p.u)三维图\n');
-        bar3(results.Pw);
+        bar3(results.P_wind);
         fprintf('风电有功功率(p.u.)数据如下\n');
-        disp(results.Pw);
+        disp(results.P_wind);
     elseif conf.time == 1
         fprintf('风电有功功率(p.u.)图\n');
-        bar(1:size(results.Pw, 1), results.Pw);
+        bar(1:size(results.P_wind, 1), results.P_wind);
     end
 end
 
@@ -83,11 +83,11 @@ if mpc.flag.storage
     figure('Name', '储能电站充放电功率');
     if conf.time == 24
         fprintf('\n储能电站充放电功率(p.u)三维图\n');
-        bar3(results.Pst);
+        bar3(results.P_storage);
         fprintf('储能电站充放电功率(p.u.)数据如下\n');
-        disp(results.Pst);
+        disp(results.P_storage);
     elseif conf.time == 1
         fprintf('储能电站充放电功率(p.u.)图\n');
-        bar(1:size(results.Pst, 1), results.Pst);
+        bar(1:size(results.P_storage, 1), results.P_storage);
     end
 end 
