@@ -52,42 +52,54 @@ end
 
 % 显示光伏出力
 if mpc.flag.pv
-    figure('Name', '光伏有功功率');
-    if conf.time == 24
-        fprintf('\n光伏有功功率(p.u)三维图\n');
-        bar3(results.P_pv);
-        fprintf('光伏有功功率(p.u.)数据如下\n');
-        disp(results.P_pv);
-    elseif conf.time == 1
-        fprintf('光伏有功功率(p.u.)图\n');
-        bar(results.P_pv);
+    if any(results.tactical_pv == 1)
+        figure('Name', '光伏有功功率');
+        if conf.time == 24
+            fprintf('\n光伏有功功率(p.u)三维图\n');
+            bar3(results.P_pv(results.tactical_pv == 1, :));
+            fprintf('光伏有功功率(p.u.)数据如下\n');
+            disp(results.P_pv(results.tactical_pv == 1, :));
+        elseif conf.time == 1
+            fprintf('光伏有功功率(p.u.)图\n');
+            bar(results.P_pv(results.tactical_pv == 1, :));
+        end
+    else
+        fprintf('计算得出安装光伏是不经济的！\n');
     end
 end
 
 % 显示风电出力
 if mpc.flag.wind
-    figure('Name', '风电有功功率');
-    if conf.time == 24
-        fprintf('\n风电有功功率(p.u)三维图\n');
-        bar3(results.P_wind);
-        fprintf('风电有功功率(p.u.)数据如下\n');
-        disp(results.P_wind);
-    elseif conf.time == 1
-        fprintf('风电有功功率(p.u.)图\n');
-        bar(1:size(results.P_wind, 1), results.P_wind);
+    if any(results.tactical_wind == 1)
+        figure('Name', '风电有功功率');
+        if conf.time == 24
+            fprintf('\n风电有功功率(p.u)三维图\n');
+            bar3(results.P_wind(results.tactical_wind == 1, :));
+            fprintf('风电有功功率(p.u.)数据如下\n');
+            disp(results.P_wind(results.tactical_wind == 1, :));
+        elseif conf.time == 1
+            fprintf('风电有功功率(p.u.)图\n');
+            bar(results.P_wind(results.tactical_wind == 1, :));
+        end
+    else
+        fprintf('计算得出安装风电是不经济的！\n');
     end
 end
 
 % 显示储能电站充放电功率
 if mpc.flag.storage
-    figure('Name', '储能电站充放电功率');
-    if conf.time == 24
-        fprintf('\n储能电站充放电功率(p.u)三维图\n');
-        bar3(results.P_storage);
-        fprintf('储能电站充放电功率(p.u.)数据如下\n');
-        disp(results.P_storage);
-    elseif conf.time == 1
-        fprintf('储能电站充放电功率(p.u.)图\n');
-        bar(1:size(results.P_storage, 1), results.P_storage);
+    if any(results.tactical_storage == 1)
+        figure('Name', '储能电站充放电功率');
+        if conf.time == 24
+            fprintf('\n储能电站充放电功率(p.u)三维图\n');
+            bar3(results.P_storage(results.tactical_storage == 1, :));
+            fprintf('储能电站充放电功率(p.u.)数据如下\n');
+            disp(results.P_storage(results.tactical_storage == 1, :));
+        elseif conf.time == 1
+            fprintf('储能电站充放电功率(p.u.)图\n');
+            bar(results.P_storage(results.tactical_storage == 1, :));
+        end
+    else
+        fprintf('计算得出安装储能电站是不经济的！\n');
     end
-end 
+end

@@ -35,9 +35,9 @@ vars.state_in = binvar(storage_num, time_period_num);  % 储能充电状态
 vars.state_out = binvar(storage_num, time_period_num); % 储能放电状态
 vars.soc = sdpvar(storage_num, time_period_num + 1);   % 储能电量
 
-tactical_wind = binvar(wind_num, 1);        % 风电作业层决策
-tactical_pv = binvar(pv_num, 1);            % 光伏作业层决策
-tactical_storage = binvar(storage_num, 1);  % 储能作业层决策
+vars.tactical_wind = binvar(wind_num, 1);        % 风电作业层决策
+vars.tactical_pv = binvar(pv_num, 1);            % 光伏作业层决策
+vars.tactical_storage = binvar(storage_num, 1);  % 储能作业层决策
 
 % gen_inv_cost = sdpvar(ng, 1);  % 发电机投资成本
 pv_inv_cost = sdpvar(1);  % 光伏投资成本
@@ -103,35 +103,35 @@ C = [C;
 C = [C;
     mpc.gen(:, 3) <= vars.P_gen <= mpc.gen(:, 2);   % 有功出力限制
     mpc.gen(:, 5) <= vars.Q_gen <= mpc.gen(:, 4);   % 无功出力限制
-    % vars.Pg.^2 + vars.Qg.^2 <= mpc.gen(:, 6).^2;  % 容量限制
+    vars.P_gen.^2 + vars.Q_gen.^2 <= mpc.gen(:, 6).^2;  % 容量限制
 ];
 
 % 3. 光伏出力约束
 C = [C;
     mpc.pv(:, 3) <= vars.P_pv <= mpc.pv(:, 2);  % 有功出力限制
     vars.P_pv <= pf_pv .* (vars.S_pv * mpc.pv_time);
-    vars.S_pv <= mpc.pv(:, 5);
+    vars.S_pv <= mpc.pv(:, 5) .* vars.tactical_pv;
+    sum(vars.tactical_pv) <= 2;
 ];
 
 % 4. 风电出力约束
 C = [C;
     mpc.wind(:, 3) <= vars.P_wind <= mpc.wind(:, 2);  % 有功出力限制
     vars.P_wind <= pf_wind .* (vars.S_wind * mpc.wind_time);
-    vars.S_wind <= mpc.wind(:, 5) .* tactical_wind;
-    sum(tactical_wind) <= 2;
+    vars.S_wind <= mpc.wind(:, 5) .* vars.tactical_wind;
+    sum(vars.tactical_wind) <= 2;
 ];
 
 % 5. 储能出力约束
 C = [C;
-    0 <= vars.P_storage_input <= mpc.storage(:, 2) .* tactical_storage;   % 有功出力限制
-    0 <= vars.P_storage_output <= mpc.storage(:, 3) .* tactical_storage;  % 有功出力限制
+    0 <= vars.P_storage_input <= mpc.storage(:, 2) .* vars.tactical_storage;   % 有功出力限制
+    0 <= vars.P_storage_output <= mpc.storage(:, 3) .* vars.tactical_storage;  % 有功出力限制
     vars.state_in + vars.state_out <= 1;     % 选择充放电状态 
     0 <= vars.P_storage_input <= 0.2 * mpc.storage(:, 5) .* vars.state_in;    % 充电功率限制
     0 <= vars.P_storage_output <= 0.2 * mpc.storage(:, 5) .* vars.state_out;  % 放电功率限制
     0.2 * vars.E_storage <= vars.soc <= 0.8 * vars.E_storage;  % 储能电量限制
     vars.soc(:, 1) == 0.5 * vars.E_storage;  % 初始电量
-    10 * tactical_storage <= S_base * vars.E_storage <= mpc.storage(:, 5) .* tactical_storage;  % 电量限制
-    % tactical_storage == 0;
+    10 * vars.tactical_storage <= S_base * vars.E_storage <= mpc.storage(:, 5) .* vars.tactical_storage;  % 电量限制
 ];
 for i = 1:time_period_num
     C = [C;
