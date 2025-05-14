@@ -25,8 +25,10 @@ if solve.problem == 0
     results.l = value(vars.l);            % 支路电流平方
     results.P = value(vars.P);            % 支路有功功率
     results.Q = value(vars.Q);            % 支路无功功率
-    results.P_gen = value(vars.P_gen(1:end-1, :));          % 发电机有功出力
-    results.Q_gen = value(vars.Q_gen(1:end-1, :));          % 发电机无功出力
+    results.P_trans = value(vars.P_trans);      % 上级变压器传输有功
+    results.Q_trans = value(vars.Q_trans);      % 上级变压器传输无功
+    results.P_gen = value(vars.P_gen);          % 发电机有功出力
+    results.Q_gen = value(vars.Q_gen);          % 发电机无功出力
     results.P_pv = value(vars.P_pv);          % 光伏有功出力
     results.S_pv = value(vars.S_pv);          % 光伏容量
     results.P_wind = value(vars.P_wind);          % 风电有功出力

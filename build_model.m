@@ -18,11 +18,12 @@ t = 24 / time_period_num;                 % 每个时段的小时数
 S_base = mpc.S_base;            % 容量基准值
 
 %% 定义决策变量
-yalmip('clear'); 
 vars.v = sdpvar(bus_num, time_period_num, conf.scenarios);     % 电压幅值平方变量
 vars.l = sdpvar(bra_num, time_period_num, conf.scenarios);     % 支路电流平方变量
 vars.P = sdpvar(bra_num, time_period_num, conf.scenarios);     % 支路有功变量
 vars.Q = sdpvar(bra_num, time_period_num, conf.scenarios);     % 支路无功变量
+vars.P_trans = sdpvar(time_period_num, conf.scenarios);        % 上级变压器传输有功
+vars.Q_trans = sdpvar(time_period_num, conf.scenarios);        % 上级变压器传输无功
 vars.P_gen = sdpvar(gen_num, time_period_num, conf.scenarios); % 发电机有功出力
 vars.Q_gen = sdpvar(gen_num, time_period_num, conf.scenarios); % 发电机无功出力
 vars.P_pv = sdpvar(pv_num, time_period_num, conf.scenarios);   % 光伏有功出力
@@ -52,6 +53,7 @@ purchase_cost = sdpvar(conf.scenarios);  % 购电成本
 branch_cost = sdpvar(conf.scenarios);  % 支路功率损耗成本
 
 %% 构建关联矩阵
+mat_trans_bus = sparse(1, 1, 1, bus_num, 1);
 mat_from_bus = sparse(mpc.branch(:, 1), 1:bra_num, ones(bra_num, 1), bus_num, bra_num);
 mat_to_bus = sparse(mpc.branch(:, 2), 1:bra_num, ones(bra_num, 1), bus_num, bra_num);
 mat_gen_bus = sparse(mpc.gen(:, 1), 1:gen_num, ones(gen_num, 1), bus_num, gen_num);
@@ -108,12 +110,14 @@ for s = 1:conf.scenarios
 
     % 2. 节点功率平衡约束
     mat_from_bus * vars.P(:, :, s) - mat_to_bus * (vars.P(:, :, s) - r .* vars.l(:, :, s)) == ...
+        mat_trans_bus * vars.P_trans(:, s) + ...
         mat_gen_bus * vars.P_gen(:, :, s) + ...
         mat_pv_bus * vars.P_pv(:, :, s) + ...
         mat_wind_bus * vars.P_wind(:, :, s) + ...
         mat_storage_bus * (vars.P_storage_output(:, :, s) - vars.P_storage_input(:, :, s)) - ...
         mpc.pd_time(:, :, s);
     mat_from_bus * vars.Q(:, :, s) - mat_to_bus * (vars.Q(:, :, s) - x .* vars.l(:, :, s)) == ...
+        mat_trans_bus * vars.Q_trans(:, s) + ...
         mat_gen_bus * vars.Q_gen(:, :, s) + ...
         mat_pv_bus * (tan(acos(pf_pv)) .* vars.P_pv(:, :, s)) + ...
         mat_wind_bus * (tan(acos(pf_wind)) .* vars.P_wind(:, :, s)) + ...

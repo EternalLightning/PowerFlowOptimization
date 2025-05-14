@@ -52,13 +52,13 @@ end
 
 % 发电机数据
 if ~isfield(case_mpc, 'gen')
-    mpc.gen = [1 1000 -1000 1000 -1000 1414 0 0 1 1 0 1];
     mpc.flag.gen = false;
+    mpc.gen = [1 0 0 0 0 0 0 0 0 0 0 0];
     disp('发电机矩阵(case_mpc.gen)未定义，默认为空！');
 elseif size(case_mpc.gen, 2) ~= 12
     error('发电机矩阵维数错误(%d)，请检查！', size(case_mpc.gen, 2));
 else
-    mpc.gen = [case_mpc.gen; 1 1000 -1000 1000 -1000 1414 0 0 1 1 0 1];
+    mpc.gen = case_mpc.gen;
 end
 
 
