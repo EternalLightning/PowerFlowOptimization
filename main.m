@@ -5,7 +5,7 @@ clc;
 conf = config();
 
 % 导入数据
-mpc = network_data(conf);
+mpc = data_check(conf);
 
 % 构建YALMIP优化模型
 [model, vars] = build_model(mpc, conf);

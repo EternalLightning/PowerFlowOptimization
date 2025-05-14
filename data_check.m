@@ -1,4 +1,4 @@
-function mpc = network_data(conf)
+function mpc = data_check(conf)
 % NETWORK_DATA 定义示例配网数据
 % 输入：
 %   conf - 配置参数结构体
