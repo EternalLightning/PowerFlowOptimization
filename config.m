@@ -20,8 +20,11 @@ conf.network.case_file = 'case33.m';
 %% 时段数量设置
 conf.time = 24; % 1为不考虑时段变化，24为一天24小时的时段变化。建议只使用1和24两个值。
 
+%% 场景设置
+conf.scenarios = 3; % 定义场景数量，例如 3 个典型场景
+
 %% 结果输出设置
 conf.output.save_results = false;    % 是否保存结果到文件
 conf.output.result_path = 'results'; % 结果保存路径
 
-end 
+end

@@ -69,15 +69,17 @@ if isfield(case_mpc, 'pv')
         error('光伏矩阵维数错误(%d)，请检查！', size(case_mpc.pv, 2));
     end
     mpc.pv = case_mpc.pv;
-    if ~isfield(case_mpc, 'pv_time')
-        mpc.pv_time = 0.35 * ones(size(mpc.pv, 1), conf.time);
-        disp('在案例文件中找到光伏矩阵，但日出力矩阵(case_mpc.pv_time)未定义，默认为最大出力的35%！');
-    elseif size(case_mpc.pv_time, 1) ~= 1
-        error('区域辐照量矩阵行数(%d)过多！在有限区域内认为辐照量完全一致。', size(case_mpc.pv_time, 1));
-    elseif size(case_mpc.pv_time, 2) ~= conf.time
-        error('光伏日出力时段跨度(%d)与设置(%d)不匹配！', size(case_mpc.pv_time, 2), conf.time);
+    % 光伏日出力时段数据
+    if isfield(case_mpc, 'pv_time')
+        if size(case_mpc.pv_time, 1) ~= conf.scenarios
+            error('光伏日出力场景数量(%d)与配置的场景数量(%d)不匹配！', size(case_mpc.pv_time, 3), conf.scenarios);
+        elseif size(case_mpc.pv_time, 2) ~= conf.time
+            error('光伏日出力时段跨度(%d)与设置(%d)不匹配！', size(case_mpc.pv_time, 2), conf.time);
+        else
+            mpc.pv_time = case_mpc.pv_time;
+        end
     else
-        mpc.pv_time = case_mpc.pv_time;
+        error('光伏日出力矩阵(case_mpc.pv_time)未定义！请在案例文件中定义！');
     end
 else
     disp('光伏矩阵(case_mpc.pv)未定义，默认为空！');
@@ -94,15 +96,17 @@ if isfield(case_mpc, 'wind')
         error('风力矩阵维数错误(%d)，请检查！', size(case_mpc.wind, 2));
     end
     mpc.wind = case_mpc.wind;
-    if ~isfield(case_mpc, 'wind_time')
-        mpc.wind_time = 0.5 * ones(size(mpc.wind, 1), conf.time);
-        disp('在案例文件中找到风力矩阵，但日出力矩阵(case_mpc.wind_time)未定义，默认为最大出力的50%！');
-    elseif size(case_mpc.wind_time, 1) ~= 1
-        error('区域风力系数矩阵(%d)过多！在有限区域内认为风力系数完全一致。', size(case_mpc.wind_time, 1));
-    elseif size(case_mpc.wind_time, 2) ~= conf.time
-        error('光伏日出力时段跨度(%d)与设置(%d)不匹配！', size(case_mpc.wind_time, 2), conf.time);
+    % 风力日出力时段数据
+    if isfield(case_mpc, 'wind_time')
+        if size(case_mpc.wind_time, 1) ~= conf.scenarios
+            error('风力日出力场景数量(%d)与配置的场景数量(%d)不匹配！', size(case_mpc.wind_time, 3), conf.scenarios);
+        elseif size(case_mpc.wind_time, 2) ~= conf.time
+            error('风力日出力时段跨度(%d)与设置(%d)不匹配！', size(case_mpc.wind_time, 2), conf.time);
+        else
+            mpc.wind_time = case_mpc.wind_time;
+        end
     else
-        mpc.wind_time = case_mpc.wind_time;
+        error('风力日出力矩阵(case_mpc.wind_time)未定义！请在案例文件中定义！');
     end
 else
     disp('风力矩阵(case_mpc.wind)未定义，默认为空！');
@@ -125,8 +129,11 @@ else
 end
 
 
+% 母线有功需求时段数据
 if isfield(case_mpc, 'pd_time')
-    if size(case_mpc.pd_time, 2) ~= conf.time
+    if size(case_mpc.pd_time, 3) ~= conf.scenarios
+        error('母线有功需求场景数量(%d)与配置的场景数量(%d)不匹配！', size(case_mpc.pd_time, 3), conf.scenarios);
+    elseif size(case_mpc.pd_time, 2) ~= conf.time
         error('母线有功需求时段跨度(%d)与设置(%d)不匹配！', size(case_mpc.pd_time, 2), conf.time);
     elseif size(case_mpc.pd_time, 1) ~= size(mpc.bus, 1)
         error('母线有功需求数量(%d)与给定母线数量(%d)不匹配！', size(case_mpc.pd_time, 1), size(mpc.bus, 1));
@@ -138,11 +145,14 @@ else
 end
 
 
+% 母线无功需求时段数据
 if isfield(case_mpc, 'qd_time')
-    if size(case_mpc.qd_time, 2) ~= conf.time
-        error('母线有功需求时段跨度(%d)与设置(%d)不匹配！', size(case_mpc.qd_time, 2), conf.time);
+    if size(case_mpc.qd_time, 3) ~= conf.scenarios
+        error('母线无功需求场景数量(%d)与配置的场景数量(%d)不匹配！', size(case_mpc.qd_time, 3), conf.scenarios);
+    elseif size(case_mpc.qd_time, 2) ~= conf.time
+        error('母线无功需求时段跨度(%d)与设置(%d)不匹配！', size(case_mpc.qd_time, 2), conf.time);
     elseif size(case_mpc.qd_time, 1) ~= size(mpc.bus, 1)
-        error('母线有功需求数量(%d)与给定母线数量(%d)不匹配！', size(case_mpc.qd_time, 1), size(mpc.bus, 1));
+        error('母线无功需求数量(%d)与给定母线数量(%d)不匹配！', size(case_mpc.qd_time, 1), size(mpc.bus, 1));
     else
         mpc.qd_time = case_mpc.qd_time / (mpc.S_base * 1000);
     end
