@@ -27,12 +27,12 @@ vars.Q_trans = sdpvar(conf.scenarios, time_period_num);        % 上级变压器
 vars.P_gen = sdpvar(gen_num, time_period_num, conf.scenarios); % 发电机有功出力
 vars.Q_gen = sdpvar(gen_num, time_period_num, conf.scenarios); % 发电机无功出力
 vars.P_pv = sdpvar(pv_num, time_period_num, conf.scenarios);   % 光伏有功出力
-vars.S_pv = sdpvar(pv_num, 1);     % 光伏配置容量
+vars.S_pv = sdpvar(pv_num, 1);                                 % 光伏配置容量
 vars.P_wind = sdpvar(wind_num, time_period_num, conf.scenarios); % 风电有功出力
-vars.S_wind = sdpvar(wind_num, 1);     % 风电配置容量
+vars.S_wind = sdpvar(wind_num, 1);                               % 风电配置容量
 vars.P_storage_input = sdpvar(storage_num, time_period_num, conf.scenarios);  % 储能有功输入
 vars.P_storage_output = sdpvar(storage_num, time_period_num, conf.scenarios); % 储能有功输出
-vars.E_storage = sdpvar(storage_num, 1);    % 储能配置容量
+vars.E_storage = sdpvar(storage_num, 1);               % 储能配置容量
 vars.state_in = binvar(storage_num, time_period_num);  % 储能充电状态
 vars.state_out = binvar(storage_num, time_period_num); % 储能放电状态
 vars.soc = sdpvar(storage_num, time_period_num + 1, conf.scenarios);   % 储能电量
@@ -71,7 +71,7 @@ C = [];
 
 %% 构建目标函数
 vars.inv_cost = S_base * 1000 / 365 * (pv_inv_cost + wind_inv_cost + storage_inv_cost);
-vars.run_cost = pv_run_cost + wind_run_cost + storage_run_cost + purchase_cost + branch_cost;
+vars.run_cost = sum(pv_run_cost + wind_run_cost + storage_run_cost + purchase_cost + branch_cost);
 model.objective = vars.run_cost + vars.inv_cost; % 欠考虑
 
 
@@ -98,11 +98,11 @@ for s = 1:conf.scenarios
     % 运行成本
         % gen_run_cost == Sb * sum((3.6 * mpc.gen(:, 11) ./ (mpc.gen(:, 12) .* (1 - mpc.gen(:, 11)))) .* vars.Pg, "all");  % 常规发电成本
         % 发电机主要是预留接口，燃气轮机组不一定会用上
-        pv_run_cost == S_base * 1000 * t * sum(mpc.pv(:, 8) .* vars.P_pv(:, :, s), 'all');  % 光伏发电成本
-        wind_run_cost == S_base * 1000 * t * sum(mpc.wind(:, 8) .* vars.P_wind(:, :, s), 'all');  % 风电发电成本
-        storage_run_cost == S_base * sum(mpc.storage(:, 7) .* (abs(vars.P_storage_input(:, :, s)) + abs(vars.P_storage_output(:, :, s))) * 1000 * t + mpc.storage(:, 8), 'all');  % 储能电站运行成本
-        purchase_cost == S_base * 1000 * t * vars.P_gen(gen_num, :, s) * mpc.price;  % 购电成本
-        branch_cost == S_base * 1000 * t * sum(vars.l(:, :, s) .* r) * mpc.price;  % 支路功率损耗成本（与电价相关）
+        pv_run_cost(s) == S_base * 1000 * t * sum(mpc.pv(:, 8) .* vars.P_pv(:, :, s), 'all');  % 光伏发电成本
+        wind_run_cost(s) == S_base * 1000 * t * sum(mpc.wind(:, 8) .* vars.P_wind(:, :, s), 'all');  % 风电发电成本
+        storage_run_cost(s) == S_base * sum(mpc.storage(:, 7) .* (abs(vars.P_storage_input(:, :, s)) + abs(vars.P_storage_output(:, :, s))) * 1000 * t + mpc.storage(:, 8), 'all');  % 储能电站运行成本
+        purchase_cost(s) == S_base * 1000 * t * vars.P_trans(s, :) * mpc.price;  % 购电成本
+        branch_cost(s) == S_base * 1000 * t * sum(vars.l(:, :, s) .* r) * mpc.price;  % 支路功率损耗成本（与电价相关）
 
     % 1. 母线电压约束
         mpc.bus(:, 6).^2 <= vars.v(:, :, s) <= mpc.bus(:, 5).^2;
