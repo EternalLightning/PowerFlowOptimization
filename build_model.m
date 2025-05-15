@@ -65,7 +65,7 @@ r = mpc.branch(:, 3);
 x = mpc.branch(:, 4);
 pf_pv = mpc.pv(:, 4);
 pf_wind = mpc.wind(:, 4);
-pf_storgare = mpc.storage(:, 4);
+pf_storage = mpc.storage(:, 4);
 
 C = [];
 
@@ -120,7 +120,7 @@ for s = 1:conf.scenarios
             mat_gen_bus * vars.Q_gen(:, :, s) + ...
             mat_pv_bus * (tan(acos(pf_pv)) .* vars.P_pv(:, :, s)) + ...
             mat_wind_bus * (tan(acos(pf_wind)) .* vars.P_wind(:, :, s)) + ...
-            mat_storage_bus * (tan(acos(pf_storgare)) .* (vars.P_storage_output(:, :, s) - vars.P_storage_input(:, :, s))) - ...
+            mat_storage_bus * (tan(acos(pf_storage)) .* (vars.P_storage_output(:, :, s) - vars.P_storage_input(:, :, s))) - ...
             mpc.qd_time(:, :, s);
 
     % 3. 支路功率流约束
@@ -143,7 +143,6 @@ for s = 1:conf.scenarios
         C = [C;
             mpc.pv(:, 3) <= vars.P_pv(:, :, s) <= mpc.pv(:, 2);  % 有功出力限制
             vars.P_pv(:, :, s) <= pf_pv .* (vars.S_pv * mpc.pv_time(s, :));
-            sum(vars.tactical_pv) <= 2;
         ];
     end
 
