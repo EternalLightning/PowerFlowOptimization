@@ -99,7 +99,7 @@ case_mpc.wind = [
 
 % 储能电站数据
 % [conn_bus P_max P_min n S a b c]
-% case_mpc.storage = [
+% case_mpc.ess = [
 %     6 0.2 0 0.9 0.23 0 0 0;
 % ];
 

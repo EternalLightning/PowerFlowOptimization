@@ -87,17 +87,17 @@ if mpc.flag.wind
 end
 
 % 显示储能电站充放电功率
-if mpc.flag.storage
-    if any(results.tactical_storage == 1)
+if mpc.flag.ess
+    if any(results.tactical_ess == 1)
         figure('Name', '储能电站充放电功率');
         if conf.time == 24
             fprintf('\n储能电站充放电功率(p.u)三维图\n');
-            bar3(results.P_storage(results.tactical_storage == 1, :));
+            bar3(results.P_ess(results.tactical_ess == 1, :));
             fprintf('储能电站充放电功率(p.u.)数据如下\n');
-            disp(results.P_storage(results.tactical_storage == 1, :));
+            disp(results.P_ess(results.tactical_ess == 1, :));
         elseif conf.time == 1
             fprintf('储能电站充放电功率(p.u.)图\n');
-            bar(results.P_storage(results.tactical_storage == 1, :));
+            bar(results.P_ess(results.tactical_ess == 1, :));
         end
     else
         fprintf('计算得出安装储能电站是不经济的！\n');

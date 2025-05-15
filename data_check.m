@@ -14,7 +14,7 @@ mpc.I_base = mpc.S_base / (mpc.U_base * sqrt(3)); % 基准电流
 mpc.flag.gen = true;
 mpc.flag.pv = true;
 mpc.flag.wind = true;
-mpc.flag.storage = true;
+mpc.flag.ess = true;
 
 
 if isempty(conf.network.case_file)
@@ -118,14 +118,14 @@ end
 
 % 储存电站数据
 % [conn_bus P_max P_min n S a b c]
-if ~isfield(case_mpc, 'storage')
-    disp('储存电站矩阵(case_mpc.storage)未定义，默认为空！');
-    mpc.storage = [1 0 0 1 0 0 0 0];
-    mpc.flag.storage = false;
-elseif size(case_mpc.storage, 2) ~= 8
-    error('储能电站矩阵维数错误(%d)，请检查！', size(case_mpc.storage, 2));
+if ~isfield(case_mpc, 'ess')
+    disp('储存电站矩阵(case_mpc.ess)未定义，默认为空！');
+    mpc.ess = [1 0 0 1 0 0 0 0];
+    mpc.flag.ess = false;
+elseif size(case_mpc.ess, 2) ~= 8
+    error('储能电站矩阵维数错误(%d)，请检查！', size(case_mpc.ess, 2));
 else
-    mpc.storage = case_mpc.storage;
+    mpc.ess = case_mpc.ess;
 end
 
 

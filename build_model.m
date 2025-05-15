@@ -7,15 +7,15 @@ function [model, vars] = build_model(mpc, conf)
 %   vars - YALMIP决策变量
 
 %% 获取系统规模
-bus_num = size(mpc.bus, 1);       % 母线数量
-bra_num = size(mpc.branch, 1);    % 支路数量
-gen_num = size(mpc.gen, 1);       % 发电机数量
-pv_num = size(mpc.pv, 1);     % 光伏数量
-wind_num = size(mpc.wind, 1);      % 风电数量
-storage_num = size(mpc.storage, 1);  % 储能数量
-time_period_num = conf.time;              % 时段数量
-t = 24 / time_period_num;                 % 每个时段时长
-S_base = mpc.S_base;            % 容量基准值
+bus_num = size(mpc.bus, 1);    % 母线数量
+bra_num = size(mpc.branch, 1); % 支路数量
+gen_num = size(mpc.gen, 1);    % 发电机数量
+pv_num = size(mpc.pv, 1);      % 光伏数量
+wind_num = size(mpc.wind, 1);  % 风电数量
+ess_num = size(mpc.ess, 1);    % 储能数量
+time_period_num = conf.time;   % 时段数量
+t = 24 / time_period_num;      % 每个时段时长
+S_base = mpc.S_base;           % 容量基准值
 
 %% 定义决策变量
 vars.v = sdpvar(bus_num, time_period_num, conf.scenarios);     % 电压幅值平方变量
@@ -30,27 +30,27 @@ vars.P_pv = sdpvar(pv_num, time_period_num, conf.scenarios);   % 光伏有功出
 vars.S_pv = sdpvar(pv_num, 1);                                 % 光伏配置容量
 vars.P_wind = sdpvar(wind_num, time_period_num, conf.scenarios); % 风电有功出力
 vars.S_wind = sdpvar(wind_num, 1);                               % 风电配置容量
-vars.P_storage_input = sdpvar(storage_num, time_period_num, conf.scenarios);  % 储能有功输入
-vars.P_storage_output = sdpvar(storage_num, time_period_num, conf.scenarios); % 储能有功输出
-vars.E_storage = sdpvar(storage_num, 1);               % 储能配置容量
-vars.state_in = binvar(storage_num, time_period_num);  % 储能充电状态
-vars.state_out = binvar(storage_num, time_period_num); % 储能放电状态
-vars.soc = sdpvar(storage_num, time_period_num + 1, conf.scenarios);   % 储能电量
+vars.P_ess_in = sdpvar(ess_num, time_period_num, conf.scenarios);  % 储能有功输入
+vars.P_ess_out = sdpvar(ess_num, time_period_num, conf.scenarios); % 储能有功输出
+vars.E_ess = sdpvar(ess_num, 1);                                 % 储能配置容量
+vars.state_in = binvar(ess_num, time_period_num);                % 储能充电状态
+vars.state_out = binvar(ess_num, time_period_num);               % 储能放电状态
+vars.soc = sdpvar(ess_num, time_period_num + 1, conf.scenarios); % 储能电量
 
-vars.tactical_wind = binvar(wind_num, 1);        % 风电作业层决策
-vars.tactical_pv = binvar(pv_num, 1);            % 光伏作业层决策
-vars.tactical_storage = binvar(storage_num, 1);  % 储能作业层决策
+vars.tactical_wind = binvar(wind_num, 1); % 风电作业层决策
+vars.tactical_pv = binvar(pv_num, 1);     % 光伏作业层决策
+vars.tactical_ess = binvar(ess_num, 1);   % 储能作业层决策
 
 % gen_inv_cost = sdpvar(ng, 1);  % 发电机投资成本
-pv_inv_cost = sdpvar(1);  % 光伏投资成本
-wind_inv_cost = sdpvar(1);  % 风电投资成本
-storage_inv_cost = sdpvar(1);  % 储能投资成本
-% gen_run_cost = sdpvar(conf.scenarios);  % 发电机运行成本
-pv_run_cost = sdpvar(conf.scenarios);  % 光伏运行成本
+pv_inv_cost = sdpvar(1);   % 光伏投资成本
+wind_inv_cost = sdpvar(1); % 风电投资成本
+ess_inv_cost = sdpvar(1);  % 储能投资成本
+% gen_run_cost = sdpvar(conf.scenarios); % 发电机运行成本
+pv_run_cost = sdpvar(conf.scenarios);    % 光伏运行成本
 wind_run_cost = sdpvar(conf.scenarios);  % 风电运行成本
-storage_run_cost = sdpvar(conf.scenarios);  % 储能运行成本
+ess_run_cost = sdpvar(conf.scenarios);   % 储能运行成本
 purchase_cost = sdpvar(conf.scenarios);  % 购电成本
-branch_cost = sdpvar(conf.scenarios);  % 支路功率损耗成本
+branch_cost = sdpvar(conf.scenarios);    % 支路功率损耗成本
 
 %% 构建关联矩阵
 mat_trans_bus = sparse(1, 1, 1, bus_num, 1);
@@ -59,19 +59,19 @@ mat_to_bus = sparse(mpc.branch(:, 2), 1:bra_num, ones(bra_num, 1), bus_num, bra_
 mat_gen_bus = sparse(mpc.gen(:, 1), 1:gen_num, ones(gen_num, 1), bus_num, gen_num);
 mat_pv_bus = sparse(mpc.pv(:, 1), 1:pv_num, ones(pv_num, 1), bus_num, pv_num);
 mat_wind_bus = sparse(mpc.wind(:, 1), 1:wind_num, ones(wind_num, 1), bus_num, wind_num);
-mat_storage_bus = sparse(mpc.storage(:, 1), 1:storage_num, ones(storage_num, 1), bus_num, storage_num);
+mat_ess_bus = sparse(mpc.ess(:, 1), 1:ess_num, ones(ess_num, 1), bus_num, ess_num);
 
 r = mpc.branch(:, 3);
 x = mpc.branch(:, 4);
 pf_pv = mpc.pv(:, 4);
 pf_wind = mpc.wind(:, 4);
-pf_storage = mpc.storage(:, 4);
+pf_ess = mpc.ess(:, 4);
 
 C = [];
 
 %% 构建目标函数
-vars.inv_cost = S_base * 1000 / 365 * (pv_inv_cost + wind_inv_cost + storage_inv_cost);
-vars.run_cost = sum(pv_run_cost + wind_run_cost + storage_run_cost + purchase_cost + branch_cost);
+vars.inv_cost = S_base * 1000 / 365 * (pv_inv_cost + wind_inv_cost + ess_inv_cost);
+vars.run_cost = sum(pv_run_cost + wind_run_cost + ess_run_cost + purchase_cost + branch_cost);
 model.objective = vars.run_cost + vars.inv_cost; % 欠考虑
 
 
@@ -81,14 +81,14 @@ C = [C;
     % gen_inv_cost = sum(mpc.gen(:, 7) ./ ((1 - mpc.gen(:, 8)) .* mpc.gen(:, 9) .* mpc.gen(:, 10)));  % 发电机投资成本
     pv_inv_cost == sum(mpc.pv(:, 6) .* mpc.pv(:, 7) .* vars.S_pv);  % 光伏投资单位容量时间成本
     wind_inv_cost == sum(mpc.wind(:, 6) .* mpc.wind(:, 7) .* vars.S_wind);  % 风电投资单位容量时间成本
-    storage_inv_cost == sum(mpc.storage(:, 6) .* vars.E_storage);  % 储能投资单位容量时间成本
+    ess_inv_cost == sum(mpc.ess(:, 6) .* vars.E_ess);  % 储能投资单位容量时间成本
 ];
 
 % 容量配置约束
 C = [C;
     vars.S_pv <= mpc.pv(:, 5) .* vars.tactical_pv;  % 光伏配置容量
     vars.S_wind <= mpc.wind(:, 5) .* vars.tactical_wind;  % 风电配置容量
-    10 * vars.tactical_storage <= S_base * vars.E_storage <= mpc.storage(:, 5) .* vars.tactical_storage;  % 电量限制
+    10 * vars.tactical_ess <= S_base * vars.E_ess <= mpc.ess(:, 5) .* vars.tactical_ess;  % 电量限制
     % sum(vars.tactical_wind) <= 2; % 风电最大安装数量
 ];
 
@@ -100,7 +100,7 @@ for s = 1:conf.scenarios
         % 发电机主要是预留接口，燃气轮机组不一定会用上
         pv_run_cost(s) == S_base * 1000 * t * sum(mpc.pv(:, 8) .* vars.P_pv(:, :, s), 'all');  % 光伏发电成本
         wind_run_cost(s) == S_base * 1000 * t * sum(mpc.wind(:, 8) .* vars.P_wind(:, :, s), 'all');  % 风电发电成本
-        storage_run_cost(s) == S_base * sum(mpc.storage(:, 7) .* (abs(vars.P_storage_input(:, :, s)) + abs(vars.P_storage_output(:, :, s))) * 1000 * t + mpc.storage(:, 8), 'all');  % 储能电站运行成本
+        ess_run_cost(s) == S_base * sum(mpc.ess(:, 7) .* (abs(vars.P_ess_in(:, :, s)) + abs(vars.P_ess_out(:, :, s))) * 1000 * t + mpc.ess(:, 8), 'all');  % 储能电站运行成本
         purchase_cost(s) == S_base * 1000 * t * vars.P_trans(s, :) * mpc.price;  % 购电成本
         branch_cost(s) == S_base * 1000 * t * sum(vars.l(:, :, s) .* r) * mpc.price;  % 支路功率损耗成本（与电价相关）
 
@@ -113,14 +113,14 @@ for s = 1:conf.scenarios
             mat_gen_bus * vars.P_gen(:, :, s) + ...
             mat_pv_bus * vars.P_pv(:, :, s) + ...
             mat_wind_bus * vars.P_wind(:, :, s) + ...
-            mat_storage_bus * (vars.P_storage_output(:, :, s) - vars.P_storage_input(:, :, s)) - ...
+            mat_ess_bus * (vars.P_ess_out(:, :, s) - vars.P_ess_in(:, :, s)) - ...
             mpc.pd_time(:, :, s);
         mat_from_bus * vars.Q(:, :, s) - mat_to_bus * (vars.Q(:, :, s) - x .* vars.l(:, :, s)) == ...
             mat_trans_bus * vars.Q_trans(s, :) + ...
             mat_gen_bus * vars.Q_gen(:, :, s) + ...
             mat_pv_bus * (tan(acos(pf_pv)) .* vars.P_pv(:, :, s)) + ...
             mat_wind_bus * (tan(acos(pf_wind)) .* vars.P_wind(:, :, s)) + ...
-            mat_storage_bus * (tan(acos(pf_storage)) .* (vars.P_storage_output(:, :, s) - vars.P_storage_input(:, :, s))) - ...
+            mat_ess_bus * (tan(acos(pf_ess)) .* (vars.P_ess_out(:, :, s) - vars.P_ess_in(:, :, s))) - ...
             mpc.qd_time(:, :, s);
 
     % 3. 支路功率流约束
@@ -155,16 +155,16 @@ for s = 1:conf.scenarios
     end
 
     % 7. 储能出力约束
-    if mpc.flag.storage
+    if mpc.flag.ess
         C = [C;
-            0 <= vars.P_storage_input(:, :, s) <= mpc.storage(:, 2) .* vars.tactical_storage;   % 有功出力限制
-            0 <= vars.P_storage_output(:, :, s) <= mpc.storage(:, 3) .* vars.tactical_storage;  % 有功出力限制
+            0 <= vars.P_ess_in(:, :, s) <= mpc.ess(:, 2) .* vars.tactical_ess;   % 有功出力限制
+            0 <= vars.P_ess_out(:, :, s) <= mpc.ess(:, 3) .* vars.tactical_ess;  % 有功出力限制
             vars.state_in + vars.state_out <= 1;     % 选择充放电状态 
-            0 <= vars.P_storage_input(:, :, s) <= 0.2 * mpc.storage(:, 5) .* vars.state_in;    % 充电功率限制
-            0 <= vars.P_storage_output(:, :, s) <= 0.2 * mpc.storage(:, 5) .* vars.state_out;  % 放电功率限制
-            0.2 * vars.E_storage <= vars.soc(:, :, s) <= 0.8 * vars.E_storage;  % 储能电量限制
-            vars.soc(:, 1, s) == 0.5 * vars.E_storage;  % 初始电量
-            vars.soc(:, 2:end, s) == vars.soc(:, 1:end-1, s) + 0.9 * vars.P_storage_input(:, :, s) - 1.11 * vars.P_storage_output(:, :, s);  % 储能电量约束
+            0 <= vars.P_ess_in(:, :, s) <= 0.2 * mpc.ess(:, 5) .* vars.state_in;    % 充电功率限制
+            0 <= vars.P_ess_out(:, :, s) <= 0.2 * mpc.ess(:, 5) .* vars.state_out;  % 放电功率限制
+            0.2 * vars.E_ess <= vars.soc(:, :, s) <= 0.8 * vars.E_ess;  % 储能电量限制
+            vars.soc(:, 1, s) == 0.5 * vars.E_ess;  % 初始电量
+            vars.soc(:, 2:end, s) == vars.soc(:, 1:end-1, s) + 0.9 * vars.P_ess_in(:, :, s) - 1.11 * vars.P_ess_out(:, :, s);  % 储能电量约束
         ];
     end
 
