@@ -15,7 +15,7 @@ conf.solver.gap_tol = 1e-2;    % 收敛容差
 conf.solver.verbose = 0;       % 是否显示求解细节（0-3）
 
 %% 案例文件选择
-conf.network.case_file = 'case33.m';
+conf.network.case_file = 'case33_3.m';
 
 %% 时段数量设置
 conf.time = 24; % 1为不考虑时段变化，24为一天24小时的时段变化。建议只使用1和24两个值。

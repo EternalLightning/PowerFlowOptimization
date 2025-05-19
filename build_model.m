@@ -18,24 +18,24 @@ t = 24 / time_period_num;      % 每个时段时长
 S_base = mpc.S_base;           % 容量基准值
 
 %% 定义决策变量
-vars.v = sdpvar(bus_num, time_period_num, conf.scenarios);     % 电压幅值平方变量
-vars.l = sdpvar(bra_num, time_period_num, conf.scenarios);     % 支路电流平方变量
-vars.P = sdpvar(bra_num, time_period_num, conf.scenarios);     % 支路有功变量
-vars.Q = sdpvar(bra_num, time_period_num, conf.scenarios);     % 支路无功变量
-vars.P_trans = sdpvar(conf.scenarios, time_period_num);        % 上级变压器传输有功
-vars.Q_trans = sdpvar(conf.scenarios, time_period_num);        % 上级变压器传输无功
-vars.P_gen = sdpvar(gen_num, time_period_num, conf.scenarios); % 发电机有功出力
-vars.Q_gen = sdpvar(gen_num, time_period_num, conf.scenarios); % 发电机无功出力
-vars.P_pv = sdpvar(pv_num, time_period_num, conf.scenarios);   % 光伏有功出力
-vars.S_pv = sdpvar(pv_num, 1);                                 % 光伏配置容量
-vars.P_wind = sdpvar(wind_num, time_period_num, conf.scenarios); % 风电有功出力
-vars.S_wind = sdpvar(wind_num, 1);                               % 风电配置容量
+vars.v = sdpvar(bus_num, time_period_num, conf.scenarios);         % 电压幅值平方变量
+vars.l = sdpvar(bra_num, time_period_num, conf.scenarios);         % 支路电流平方变量
+vars.P = sdpvar(bra_num, time_period_num, conf.scenarios);         % 支路有功变量
+vars.Q = sdpvar(bra_num, time_period_num, conf.scenarios);         % 支路无功变量
+vars.P_trans = sdpvar(conf.scenarios, time_period_num);            % 上级变压器传输有功
+vars.Q_trans = sdpvar(conf.scenarios, time_period_num);            % 上级变压器传输无功
+vars.P_gen = sdpvar(gen_num, time_period_num, conf.scenarios);     % 发电机有功出力
+vars.Q_gen = sdpvar(gen_num, time_period_num, conf.scenarios);     % 发电机无功出力
+vars.P_pv = sdpvar(pv_num, time_period_num, conf.scenarios);       % 光伏有功出力
+vars.S_pv = sdpvar(pv_num, 1);                                     % 光伏配置容量
+vars.P_wind = sdpvar(wind_num, time_period_num, conf.scenarios);   % 风电有功出力
+vars.S_wind = sdpvar(wind_num, 1);                                 % 风电配置容量
 vars.P_ess_in = sdpvar(ess_num, time_period_num, conf.scenarios);  % 储能有功输入
 vars.P_ess_out = sdpvar(ess_num, time_period_num, conf.scenarios); % 储能有功输出
-vars.E_ess = sdpvar(ess_num, 1);                                 % 储能配置容量
-vars.state_in = binvar(ess_num, time_period_num);                % 储能充电状态
-vars.state_out = binvar(ess_num, time_period_num);               % 储能放电状态
-vars.soc = sdpvar(ess_num, time_period_num + 1, conf.scenarios); % 储能电量
+vars.E_ess = sdpvar(ess_num, 1);                                   % 储能配置容量
+vars.state_in = binvar(ess_num, time_period_num, conf.scenarios);  % 储能充电状态
+vars.state_out = binvar(ess_num, time_period_num, conf.scenarios); % 储能放电状态
+vars.soc = sdpvar(ess_num, time_period_num + 1, conf.scenarios);   % 储能电量
 
 vars.tactical_wind = binvar(wind_num, 1); % 风电作业层决策
 vars.tactical_pv = binvar(pv_num, 1);     % 光伏作业层决策
@@ -92,9 +92,49 @@ C = [C;
     % sum(vars.tactical_wind) <= 2; % 风电最大安装数量
 ];
 
+% 变压器传输约束
+C = [C;
+    -1000 <= vars.P_trans <= 1000;
+    -1000 <= vars.Q_trans <= 1000;
+];
+
+% 未安装设备时的特判(为了避免重复定义无用约束)
+if ~mpc.flag.gen
+    C = [C;
+        vars.P_gen == 0;
+        vars.Q_gen == 0;  
+    ];
+end
+
+if ~mpc.flag.pv
+    C = [C;
+        vars.P_pv == 0;  
+        vars.S_pv == 0; 
+    ];
+end
+
+if ~mpc.flag.wind
+    C = [C;
+        vars.P_wind == 0;
+        vars.S_wind == 0;
+    ];
+end
+
+if ~mpc.flag.ess
+    C = [C;
+        vars.P_ess_in == 0;   
+        vars.P_ess_out == 0;  
+        vars.soc == 0;        
+        vars.state_in == 0;   
+        vars.state_out == 0;  
+        vars.E_ess == 0;
+    ];
+end
+
 for s = 1:conf.scenarios
 
     C = [C;
+
     % 运行成本
         % gen_run_cost == Sb * sum((3.6 * mpc.gen(:, 11) ./ (mpc.gen(:, 12) .* (1 - mpc.gen(:, 11)))) .* vars.Pg, "all");  % 常规发电成本
         % 发电机主要是预留接口，燃气轮机组不一定会用上
@@ -159,9 +199,9 @@ for s = 1:conf.scenarios
         C = [C;
             0 <= vars.P_ess_in(:, :, s) <= mpc.ess(:, 2) .* vars.tactical_ess;   % 有功出力限制
             0 <= vars.P_ess_out(:, :, s) <= mpc.ess(:, 3) .* vars.tactical_ess;  % 有功出力限制
-            vars.state_in + vars.state_out <= 1;     % 选择充放电状态 
-            0 <= vars.P_ess_in(:, :, s) <= 0.2 * mpc.ess(:, 5) .* vars.state_in;    % 充电功率限制
-            0 <= vars.P_ess_out(:, :, s) <= 0.2 * mpc.ess(:, 5) .* vars.state_out;  % 放电功率限制
+            vars.state_in(:, :, s) + vars.state_out(:, :, s) <= 1;     % 选择充放电状态 
+            0 <= vars.P_ess_in(:, :, s) <= 0.2 * mpc.ess(:, 5) .* vars.state_in(:, :, s);    % 充电功率限制
+            0 <= vars.P_ess_out(:, :, s) <= 0.2 * mpc.ess(:, 5) .* vars.state_out(:, :, s);  % 放电功率限制
             0.2 * vars.E_ess <= vars.soc(:, :, s) <= 0.8 * vars.E_ess;  % 储能电量限制
             vars.soc(:, 1, s) == 0.5 * vars.E_ess;  % 初始电量
             vars.soc(:, 2:end, s) == vars.soc(:, 1:end-1, s) + 0.9 * vars.P_ess_in(:, :, s) - 1.11 * vars.P_ess_out(:, :, s);  % 储能电量约束
