@@ -1,5 +1,6 @@
 clear;
 clc;
+tic;
 
 % 加载配置参数
 conf = config();
@@ -8,7 +9,7 @@ conf = config();
 mpc = data_check(conf);
 
 % 构建YALMIP优化模型
-[model, vars, tactical] = build_model(mpc, conf);
+[model, vars] = build_model(mpc, conf);
 
 % 设置求解器选项
 options = sdpsettings('solver', conf.solver.name, ...
@@ -19,6 +20,8 @@ options = sdpsettings('solver', conf.solver.name, ...
 
 solve = optimize(model.constraints, model.objective, options);
 
+toc;
+disp(['求解时间为', ' num2str(toc) 秒']);
 
 if solve.problem == 0
     results.v = value(vars.v);             % 母线电压幅值平方
@@ -37,9 +40,9 @@ if solve.problem == 0
     results.soc = value(vars.soc);           % 储能电站荷电状态
     results.inv_cost = value(vars.inv_cost); % 投资成本
     results.run_cost = value(vars.run_cost); % 运行成本
-    results.tactical_wind = value(tactical.wind);  % 风电作业层决策
-    results.tactical_pv = value(tactical.pv);      % 光伏作业层决策
-    results.tactical_ess = value(tactical.ess);    % 储能作业层决策
+    results.tactical_wind = value(vars.tactical_wind);  % 风电作业层决策
+    results.tactical_pv = value(vars.tactical_pv);      % 光伏作业层决策
+    results.tactical_ess = value(vars.tactical_ess);    % 储能作业层决策
     results.obj = value(model.objective);               % 目标函数值
     
     % 显示结果

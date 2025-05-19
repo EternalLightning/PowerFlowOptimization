@@ -45,12 +45,12 @@ vars.tactical_ess = binvar(ess_num, 1);   % 储能作业层决策
 pv_inv_cost = sdpvar(1);   % 光伏投资成本
 wind_inv_cost = sdpvar(1); % 风电投资成本
 ess_inv_cost = sdpvar(1);  % 储能投资成本
-% gen_run_cost = sdpvar(conf.scenarios); % 发电机运行成本
-pv_run_cost = sdpvar(conf.scenarios);    % 光伏运行成本
-wind_run_cost = sdpvar(conf.scenarios);  % 风电运行成本
-ess_run_cost = sdpvar(conf.scenarios);   % 储能运行成本
-purchase_cost = sdpvar(conf.scenarios);  % 购电成本
-branch_cost = sdpvar(conf.scenarios);    % 支路功率损耗成本
+% gen_run_cost = sdpvar(conf.scenarios, 1); % 发电机运行成本
+pv_run_cost = sdpvar(conf.scenarios, 1);    % 光伏运行成本
+wind_run_cost = sdpvar(conf.scenarios, 1);  % 风电运行成本
+ess_run_cost = sdpvar(conf.scenarios, 1);   % 储能运行成本
+purchase_cost = sdpvar(conf.scenarios, 1);  % 购电成本
+branch_cost = sdpvar(conf.scenarios, 1);    % 支路功率损耗成本
 
 %% 构建关联矩阵
 mat_trans_bus = sparse(1, 1, 1, bus_num, 1);
@@ -67,7 +67,6 @@ pf_pv = mpc.pv(:, 4);
 pf_wind = mpc.wind(:, 4);
 pf_ess = mpc.ess(:, 4);
 
-C = [];
 
 %% 构建目标函数
 vars.inv_cost = S_base * 1000 / 365 * (pv_inv_cost + wind_inv_cost + ess_inv_cost);
@@ -76,24 +75,20 @@ model.objective = vars.run_cost + vars.inv_cost; % 欠考虑
 
 
 %% 构建约束条件
+C = [
 % 投资成本
-C = [C;
     % gen_inv_cost = sum(mpc.gen(:, 7) ./ ((1 - mpc.gen(:, 8)) .* mpc.gen(:, 9) .* mpc.gen(:, 10)));  % 发电机投资成本
     pv_inv_cost == sum(mpc.pv(:, 6) .* mpc.pv(:, 7) .* vars.S_pv);  % 光伏投资单位容量时间成本
     wind_inv_cost == sum(mpc.wind(:, 6) .* mpc.wind(:, 7) .* vars.S_wind);  % 风电投资单位容量时间成本
     ess_inv_cost == sum(mpc.ess(:, 6) .* vars.E_ess);  % 储能投资单位容量时间成本
-];
 
 % 容量配置约束
-C = [C;
     vars.S_pv <= mpc.pv(:, 5) .* vars.tactical_pv;  % 光伏配置容量
     vars.S_wind <= mpc.wind(:, 5) .* vars.tactical_wind;  % 风电配置容量
     10 * vars.tactical_ess <= S_base * vars.E_ess <= mpc.ess(:, 5) .* vars.tactical_ess;  % 电量限制
     % sum(vars.tactical_wind) <= 2; % 风电最大安装数量
-];
 
 % 变压器传输约束
-C = [C;
     -1000 <= vars.P_trans <= 1000;
     -1000 <= vars.Q_trans <= 1000;
 ];
