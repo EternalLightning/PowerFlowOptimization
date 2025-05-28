@@ -40,7 +40,7 @@ end
 % [from_bus to_bus r x b S_max I_max]
 if ~isfield(case_mpc, 'branch')
     error('支路矩阵(case_mpc.branch)未定义，请在案例文件中定义！');
-elseif size(case_mpc.branch, 2) ~= 7
+elseif size(case_mpc.branch, 2) ~= 6
     error('支路矩阵维数错误(%d)，请检查！', size(case_mpc.branch, 2));
 else
     mpc.branch = case_mpc.branch;

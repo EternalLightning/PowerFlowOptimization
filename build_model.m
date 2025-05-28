@@ -161,7 +161,7 @@ for s = 1:conf.scenarios
     % 3. 支路功率流约束
         vars.P(:, :, s).^2 + vars.Q(:, :, s).^2 <= vars.l(:, :, s) .* (mat_from_bus' * vars.v(:, :, s));
         mat_to_bus' * vars.v(:, :, s) == mat_from_bus' * vars.v(:, :, s) - 2 * (r .* vars.P(:, :, s) + x .* vars.Q(:, :, s)) + (r.^2 + x.^2) .* vars.l(:, :, s);
-        0 <= vars.l(:, :, s) <= mpc.branch(:, 7).^2;
+        0 <= vars.l(:, :, s) <= mpc.branch(:, 6).^2;
     ];
 
     % 4. 发电机出力约束
