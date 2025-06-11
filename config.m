@@ -12,7 +12,7 @@ conf.base.U = 12.66;     % 基准电压
 conf.solver.name = 'cplex';    % 求解器选择：'cplex', 'gurobi'等
 conf.solver.max_time = 3600;   % 最大求解时间（秒）
 conf.solver.gap_tol = 1e-2;    % 收敛容差
-conf.solver.verbose = 3;       % 是否显示求解细节（0-3）
+conf.solver.verbose = 0;       % 是否显示求解细节（0-3）
 
 %% 案例文件选择
 conf.network.case_file = 'case33_3.m';

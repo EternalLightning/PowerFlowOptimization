@@ -11,6 +11,8 @@ fprintf('投资成本: %.2f 元\n', results.inv_cost);
 fprintf('运行成本: %.2f 元\n', results.run_cost);
 
 if isfield(conf, 'scenarios') && conf.scenarios > 1
+    fprintf('光伏安装容量: %.2f\n', results.S_pv(results.tactical_pv == 1) * conf.base.S);
+    fprintf('风电安装容量: %.2f\n', results.S_wind(results.tactical_wind == 1) * conf.base.S);
     for s = 1:conf.scenarios
         fprintf('\n==== 场景 %d ====\n', s);
         % 电压
@@ -152,6 +154,8 @@ else
     % 显示光伏出力
     if mpc.flag.pv
         if any(results.tactical_pv == 1)
+            % 新增：显示光伏安装容量
+            fprintf('光伏安装容量: %.2f\n', sum(results.pv_capacity(results.tactical_pv == 1)));
             figure('Name', '光伏有功功率');
             if conf.time == 24
                 fprintf('\n光伏有功功率(p.u)三维图\n');
@@ -170,6 +174,8 @@ else
     % 显示风电出力
     if mpc.flag.wind
         if any(results.tactical_wind == 1)
+            % 新增：显示风电安装容量
+            fprintf('风电安装容量: %.2f\n', sum(results.wind_capacity(results.tactical_wind == 1)));
             figure('Name', '风电有功功率');
             if conf.time == 24
                 fprintf('\n风电有功功率(p.u)三维图\n');

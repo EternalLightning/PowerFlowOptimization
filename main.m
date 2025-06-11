@@ -40,9 +40,9 @@ if solve.problem == 0
     results.soc = value(vars.soc);           % 储能电站荷电状态
     results.inv_cost = value(vars.inv_cost); % 投资成本
     results.run_cost = value(vars.run_cost); % 运行成本
-    results.tactical_wind = value(vars.tactical_wind);  % 风电作业层决策
-    results.tactical_pv = value(vars.tactical_pv);      % 光伏作业层决策
-    results.tactical_ess = value(vars.tactical_ess);    % 储能作业层决策
+    results.tactical_wind = value(vars.tactical_wind);  % 风电上层决策
+    results.tactical_pv = value(vars.tactical_pv);      % 光伏上层决策
+    results.tactical_ess = value(vars.tactical_ess);    % 储能上层决策
     results.obj = value(model.objective);               % 目标函数值
     
     % 显示结果

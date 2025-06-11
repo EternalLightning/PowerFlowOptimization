@@ -63,9 +63,9 @@ end
 
 
 % 光伏发电数据
-% [conn_bus P_max P_min n S k a b]
+% [conn_bus n S k a b eff]
 if isfield(case_mpc, 'pv')
-    if size(case_mpc.pv, 2) ~= 8
+    if size(case_mpc.pv, 2) ~= 7
         error('光伏矩阵维数错误(%d)，请检查！', size(case_mpc.pv, 2));
     end
     mpc.pv = case_mpc.pv;
@@ -83,14 +83,14 @@ if isfield(case_mpc, 'pv')
     end
 else
     disp('光伏矩阵(case_mpc.pv)未定义，默认为空！');
-    mpc.pv = [1 0 0 1 0 0 0 0];
+    mpc.pv = [1 1 0 0 0 0 0];
     mpc.pv_time = 0;
     mpc.flag.pv = false;
 end
 
 
 % 风力发电数据
-% [conn_bus P_max P_min n S k a b]
+% [conn_bus n S k a b R C]
 if isfield(case_mpc, 'wind')
     if size(case_mpc.wind, 2) ~= 8
         error('风力矩阵维数错误(%d)，请检查！', size(case_mpc.wind, 2));
@@ -110,7 +110,7 @@ if isfield(case_mpc, 'wind')
     end
 else
     disp('风力矩阵(case_mpc.wind)未定义，默认为空！');
-    mpc.wind = [1 0 0 1 0 0 0 0];
+    mpc.wind = [1 1 0 0 0 0 0 0];
     mpc.wind_time = 0;
     mpc.flag.wind = false;
 end
@@ -169,5 +169,17 @@ elseif size(case_mpc.price, 1) ~= conf.time
 else
     mpc.price = case_mpc.price;
 end
+
+% 场景概率
+if isfield(case_mpc, 'prob')
+    if length(case_mpc.prob) ~= conf.scenarios
+        error('场景概率数量(%d)与配置的场景数量(%d)不匹配！', length(case_mpc.probability), conf.scenarios);
+    elseif sum(case_mpc.prob) ~= 1
+        error('场景概率和不为1，请检查！');
+    else
+        mpc.prob = case_mpc.prob;
+    end
+else
+    mpc.proby = ones(1, conf.scenarios) / conf.scenarios; % 默认均匀分布
 
 end

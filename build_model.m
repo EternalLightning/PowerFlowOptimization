@@ -37,9 +37,9 @@ vars.state_in = binvar(ess_num, time_period_num, conf.scenarios);  % 储能充�
 vars.state_out = binvar(ess_num, time_period_num, conf.scenarios); % 储能放电状态
 vars.soc = sdpvar(ess_num, time_period_num + 1, conf.scenarios);   % 储能电量
 
-vars.tactical_wind = binvar(wind_num, 1); % 风电作业层决策
-vars.tactical_pv = binvar(pv_num, 1);     % 光伏作业层决策
-vars.tactical_ess = binvar(ess_num, 1);   % 储能作业层决策
+vars.tactical_wind = binvar(wind_num, 1); % 风电上层决策
+vars.tactical_pv = binvar(pv_num, 1);     % 光伏上层决策
+vars.tactical_ess = binvar(ess_num, 1);   % 储能上层决策
 
 % gen_inv_cost = sdpvar(ng, 1);  % 发电机投资成本
 pv_inv_cost = sdpvar(1);   % 光伏投资成本
@@ -63,15 +63,15 @@ mat_ess_bus = sparse(mpc.ess(:, 1), 1:ess_num, ones(ess_num, 1), bus_num, ess_nu
 
 r = mpc.branch(:, 3);
 x = mpc.branch(:, 4);
-pf_pv = mpc.pv(:, 4);
-pf_wind = mpc.wind(:, 4);
+pf_pv = mpc.pv(:, 2);
+pf_wind = mpc.wind(:, 2);
 pf_ess = mpc.ess(:, 4);
 
 
 %% 构建目标函数
 vars.inv_cost = S_base * 1000 / 365 * (pv_inv_cost + wind_inv_cost + ess_inv_cost);
-vars.run_cost = sum(pv_run_cost + wind_run_cost + ess_run_cost + purchase_cost + branch_cost);
-model.objective = vars.run_cost + vars.inv_cost; % 欠考虑
+vars.run_cost = mpc.prob * (pv_run_cost + wind_run_cost + ess_run_cost + purchase_cost + branch_cost);
+model.objective = vars.run_cost + vars.inv_cost;
 
 
 %% 构建约束条件
@@ -83,8 +83,8 @@ C = [
     ess_inv_cost == sum(mpc.ess(:, 6) .* vars.E_ess);  % 储能投资单位容量时间成本
 
 % 容量配置约束
-    vars.S_pv <= mpc.pv(:, 5) .* vars.tactical_pv;  % 光伏配置容量
-    vars.S_wind <= mpc.wind(:, 5) .* vars.tactical_wind;  % 风电配置容量
+    vars.S_pv <= mpc.pv(:, 3) .* vars.tactical_pv;  % 光伏配置容量
+    vars.S_wind <= mpc.wind(:, 3) .* vars.tactical_wind;  % 风电配置容量
     10 * vars.tactical_ess <= S_base * vars.E_ess <= mpc.ess(:, 5) .* vars.tactical_ess;  % 电量限制
     % sum(vars.tactical_wind) <= 2; % 风电最大安装数量
 
@@ -176,15 +176,15 @@ for s = 1:conf.scenarios
     % 5. 光伏出力约束
     if mpc.flag.pv
         C = [C;
-            mpc.pv(:, 3) <= vars.P_pv(:, :, s) <= mpc.pv(:, 2);  % 有功出力限制
-            vars.P_pv(:, :, s) <= pf_pv .* (vars.S_pv * mpc.pv_time(s, :));
+            % 删除P_max/P_min约束
+            vars.P_pv(:, :, s) <= pf_pv .* (vars.S_pv * mpc.pv_time(s, :) .* mpc.pv(:, end) / 1000);  % 光伏容量限制
         ];
     end
 
     % 6. 风电出力约束
     if mpc.flag.wind
         C = [C;
-            mpc.wind(:, 3) <= vars.P_wind(:, :, s) <= mpc.wind(:, 2);  % 有功出力限制
+            % 删除P_max/P_min约束
             vars.P_wind(:, :, s) <= pf_wind .* (vars.S_wind * mpc.wind_time(s, :));
         ];
     end
