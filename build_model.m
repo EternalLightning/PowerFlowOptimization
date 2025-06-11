@@ -113,12 +113,6 @@ if ~mpc.flag.wind
         vars.P_wind == 0;
         vars.S_wind == 0;
     ];
-else
-    for i = 1:wind_num
-        C = [C;
-            vars.S_wind(i) == max(vars.P_wind(i, :, :));
-        ];
-    end
 end
 
 if ~mpc.flag.ess
@@ -195,8 +189,13 @@ for s = 1:conf.scenarios
     if mpc.flag.wind
         C = [C;
             vars.P_wind(:, :, s) <= (0.5 * 1.225 * pi) * (mpc.wind(:, 7).^2) .* ...
-                (mpc.wind_time(:, :, s).^3) .* mpc.wind(:, 8) / (mpc.S_base * 10^6);  % 风电容量限制
+                (mpc.wind_time(s, :).^3) .* mpc.wind(:, 8) / (mpc.S_base * 10^6);  % 风电容量限制
         ];
+        for i = 1:wind_num
+            C = [C;
+                max(vars.P_wind(i, :, s)) <= vars.S_wind(i);
+            ];
+        end
     end
 
     % 7. 储能出力约束
