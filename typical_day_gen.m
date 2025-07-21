@@ -30,5 +30,6 @@ fprintf('当分类数量为 %d 个时效果最佳！', num_clusters);
 
 tmp = tabulate(index);
 prob = tmp(:, 3) / 100;  % 场景概率
+pv_time = centers;
 
 end
