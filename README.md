@@ -114,6 +114,10 @@ $$C_\mathrm{ess}^\mathrm{run}=bP_\mathrm{ess}\cdot t×10^3+c$$
 ### 无功负荷矩阵 (`case_mpc.qd_time`)
 一个 `bus_num * conf.time * s` 的矩阵，为每个母线每个时段的无功负荷需求。其中 `s` 为场景数。
 
+### 电动汽车需求矩阵 (`case_mpc.ev_time`)
+一个 `ev_num * (conf.time + 2)` 的矩阵，为每个母线每个时段的电动汽车充电需求。
+其中 `ev_num` 为电动汽车充电站数量，`conf.time` 为时段数。矩阵的第一列为电动汽车充电站连接的节点编号，第二列为该充电站的额定功率因数，后`conf.time` 列为每个时段的**有功需求**。
+
 ### 电价矩阵 (`case_mpc.price`)
 每度电的价格，一个长度为 `conf.time` 的列向量，记录每个时段的电价。
 
@@ -160,8 +164,8 @@ $\mathbf{T}_\mathrm{pv}$、$\mathbf{T}_\mathrm{wind}$、$\mathbf{T}_\mathrm{ess}
 
 $$
 \begin{cases}
--P_\mathrm{trans}^\mathrm{max} \leq P_\mathrm{trans} \leq P_\mathrm{trans}^\mathrm{max} \\
-P_\mathrm{trans}^2+Q_\mathrm{trans}^2 \leq S_\mathrm{trans,N}^\mathrm{2}
+-P_\mathrm{N} \leq P_\mathrm{trans} \leq P_\mathrm{N}\\
+P_\mathrm{trans}^2+Q_\mathrm{trans}^2 \leq S_\mathrm{N}^\mathrm{2}
 \end{cases}
 $$
 

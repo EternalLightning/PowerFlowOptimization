@@ -161,6 +161,27 @@ else
 end
 
 
+% 电动汽车有功需求
+if isfield(case_mpc, 'ev_time')
+    if size(case_mpc.ev_time, 2) ~= conf.time + 2
+        error('电动汽车有功需求矩阵维度(%d)与应设置值(%d)不匹配！', size(case_mpc.ev_time, 2), conf.time + 2);
+    else
+        for i = 1:size(case_mpc.ev_time, 1)
+            bus_num = case_mpc.ev_time(i, 1);
+
+            if bus_num > size(mpc.bus, 1)
+                error('电动汽车连接的母线编号(%d)超过了母线数量(%d)！', bus_num, size(mpc.bus, 1));
+            end
+        
+            mpc.pd_time(bus_num, :, :) = mpc.pd_time(bus_num, :, :) + case_mpc.ev_time(bus_num, 3:end) / (mpc.S_base * 1000);
+            mpc.qd_time(bus_num, :, :) = mpc.qd_time(bus_num, :, :) + case_mpc.ev_time(bus_num, 3:end) * tan(acos(case_mpc.ev_time(bus_num, 2))) / (mpc.S_base * 1000);
+        end
+    end
+else
+    error('电动汽车有功需求矩阵(case_mpc.ev_time)未定义！请在案例文件中定义！');
+end
+
+
 % 电价数据
 if ~isfield(case_mpc, 'price')
     error('电价矩阵(case_mpc.price)未定义，请在案例文件中定义！')
@@ -169,6 +190,7 @@ elseif size(case_mpc.price, 1) ~= conf.time
 else
     mpc.price = case_mpc.price;
 end
+
 
 % 场景概率
 if isfield(case_mpc, 'prob')
